@@ -381,13 +381,13 @@ public static class FastBinaryFormatter
         return Deserialize(type, ref reader, serializerContext);
     }
 
-    private static object Deserialize<TReader>(Type type, ref TReader reader, FastSerializerContext serializerContext)
+    private static object Deserialize<TReader>([DynamicallyAccessedMembers(DynamicallyAccessed)] Type type, ref TReader reader, FastSerializerContext serializerContext)
             where TReader : IBytesReader
     {
-        var nullable = type.IsNullableType();
+        var nullable = type.IsNullableType(out var actualType);
         if (nullable)
         {
-            type = type.GenericTypeArguments[0];
+            type = actualType;
         }
 
         // 基础类型统一处理
@@ -406,7 +406,7 @@ public static class FastBinaryFormatter
         return DeserializeClass(type, serializeObj, ref reader, len, serializerContext);
     }
 
-    private static object DeserializeClass<TReader>(Type type, SerializObject serializeObject, ref TReader reader, int length, FastSerializerContext serializerContext)
+    private static object DeserializeClass<TReader>([DynamicallyAccessedMembers(DynamicallyAccessed)] Type type, SerializObject serializeObject, ref TReader reader, int length, FastSerializerContext serializerContext)
             where TReader : IBytesReader
     {
         object instance;

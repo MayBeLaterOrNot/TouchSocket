@@ -49,15 +49,6 @@ public class Method
         {
             switch (dynamicBuilderType.Value)
             {
-                case DynamicBuilderType.IL:
-                    {
-                        if (!GlobalEnvironment.IsDynamicCodeSupported)
-                        {
-                            ThrowHelper.ThrowNotSupportedException($"当前环境不支持{dynamicBuilderType.Value}");
-                        }
-                        this.m_dynamicMethodInfo = new ILDynamicMethodInfo(method);
-                        break;
-                    }
                 case DynamicBuilderType.Expression:
                     this.m_dynamicMethodInfo = new ExpressionDynamicMethodInfo(method);
                     break;
@@ -211,6 +202,8 @@ public class Method
     /// 通过源生成器创建动态方法信息。
     /// </summary>
     /// <returns>动态方法信息接口。</returns>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "源生成器生成的代码在AOT环境中是安全的")]
+    [UnconditionalSuppressMessage("Trimming", "IL2075:'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The parameter of method does not have matching annotations.", Justification = "源生成器确保相关成员在编译时存在")]
     private IDynamicMethodInfo CreateDynamicMethodInfoFromSG()
     {
         var typeName = $"{GeneratorTypeNamespace}.__{StringExtension.MakeIdentifier(this.Info.DeclaringType.FullName)}MethodExtension";

@@ -10,18 +10,20 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace TouchSocket.Core;
 
 /// <summary>
 /// String值转换为基础类型。
 /// </summary>
-public class StringToPrimitiveSerializerFormatter<TState> : ISerializerFormatter<string, TState>
+public class StringToPrimitiveSerializerFormatter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState> : ISerializerFormatter<string, TState>
 {
     /// <inheritdoc/>
     public int Order { get; set; }
 
     /// <inheritdoc/>
-    public virtual bool TryDeserialize(TState state, in string source, Type targetType, out object target)
+    public virtual bool TryDeserialize(TState state, in string source, [DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] Type targetType, out object target)
     {
         if (targetType.IsPrimitive())
         {

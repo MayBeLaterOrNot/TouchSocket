@@ -49,21 +49,21 @@ public interface IPluginManager : IDisposableObject, IResolverObject
     /// <param name="pluginType">插件的类型。</param>
     /// <param name="pluginInvokeHandler">插件调用处理程序，当插件被调用时执行。</param>
     /// <param name="sourceDelegate">可选的源委托，用于标识插件的来源。</param>
-    void Add(Type pluginType, Func<object, PluginEventArgs, Task> pluginInvokeHandler, Delegate sourceDelegate = default);
+    void Add([DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] Type pluginType, Func<object, PluginEventArgs, Task> pluginInvokeHandler, Delegate sourceDelegate = default);
 
     /// <summary>
     /// 获取来自IOC容器的指定名称的插件数量。
     /// </summary>
     /// <param name="pluginType">插件类型</param>
     /// <returns>插件数量</returns>
-    int GetFromIocCount(Type pluginType);
+    int GetFromIocCount([DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] Type pluginType);
 
     /// <summary>
     /// 获取已添加的指定名称的插件数量。
     /// </summary>
     /// <param name="pluginType"></param>
     /// <returns></returns>
-    int GetPluginCount(Type pluginType);
+    int GetPluginCount([DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] Type pluginType);
 
     /// <summary>
     /// 触发对应插件
@@ -73,7 +73,7 @@ public interface IPluginManager : IDisposableObject, IResolverObject
     /// <param name="sender">事件发送者</param>
     /// <param name="e">事件参数</param>
     /// <returns>表示在执行的插件中，是否处理<see cref="TouchSocketEventArgs.Handled"/>为<see langword="true"/>。</returns>
-    ValueTask<bool> RaiseAsync(Type pluginType, IResolver resolver, object sender, PluginEventArgs e);
+    ValueTask<bool> RaiseAsync([DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] Type pluginType, IResolver resolver, object sender, PluginEventArgs e);
 
     /// <summary>
     /// 移除指定的插件实例
@@ -86,5 +86,5 @@ public interface IPluginManager : IDisposableObject, IResolverObject
     /// </summary>
     /// <param name="pluginType">要移除的插件类型</param>
     /// <param name="func">代表要移除的功能的委托</param>
-    void Remove(Type pluginType, Delegate func);
+    void Remove([DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] Type pluginType, Delegate func);
 }

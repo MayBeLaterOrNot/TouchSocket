@@ -18,11 +18,6 @@ namespace TouchSocket.Core;
 public enum DynamicBuilderType
 {
     /// <summary>
-    /// 使用IL构建
-    /// </summary>
-    IL,
-
-    /// <summary>
     /// 使用表达式树
     /// </summary>
     Expression,

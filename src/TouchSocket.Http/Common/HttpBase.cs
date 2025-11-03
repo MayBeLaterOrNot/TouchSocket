@@ -6,12 +6,13 @@
 //  Gitee源代码仓库：https://gitee.com/RRQM_Home
 //  Github源代码仓库：https://github.com/RRQM
 //  API首页：https://touchsocket.net/
-//  交流QQ群：234762506
+//交流QQ群：234762506
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using TouchSocket.Sockets;
 
 namespace TouchSocket.Http;
@@ -129,34 +130,34 @@ public abstract class HttpBase : IRequestInfo
     /// </summary>
     public string ProtocolVersion { get; set; } = "1.1";
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool ParsingHeader<TReader>(ref TReader reader) where TReader : IBytesReader
     {
-        var index = ReaderExtension.IndexOf(ref reader, StringExtension.Default_RNRN_Utf8Span);
+        var index = ReaderExtension.IndexOf(ref reader, TouchSocketHttpUtility.CRLFCRLF);
 
-        if (index >= 0)
-        {
-            // 计算从当前读取位置到头部结束标记的长度
-            var headerLength = (int)index;
-
-            // 确保不会读取超过可用数据的内容
-            if (reader.BytesRemaining < headerLength + 4) // +4 为 \r\n\r\n 的长度
-            {
-                return false;
-            }
-
-            // 获取头部数据，不包含结尾的 \r\n\r\n
-            var headerSpan = reader.GetSpan(headerLength);
-
-            this.ReadHeaders(headerSpan);
-
-            // 跳过头部数据和 \r\n\r\n 分隔符
-            reader.Advance(headerLength + 4);
-            return true;
-        }
-        else
+        if (index < 0)
         {
             return false;
         }
+
+        var headerLength = (int)index;
+
+        // 提前检查数据完整性，避免后续无效操作
+        var totalRequired = headerLength + 4; // +4 为 \r\n\r\n 的长度
+        if (reader.BytesRemaining < totalRequired)
+        {
+            return false;
+        }
+
+        // 一次性获取头部数据，减少多次调用GetSpan的开销
+        var headerSpan = reader.GetSpan(headerLength);
+
+        // 调用优化后的头部解析方法
+        this.ReadHeadersOptimized(headerSpan);
+
+        // 跳过头部数据和 \r\n\r\n 分隔符
+        reader.Advance(totalRequired);
+        return true;
     }
 
     protected internal virtual void Reset()
@@ -171,77 +172,75 @@ public abstract class HttpBase : IRequestInfo
     /// <param name="requestLineSpan">包含请求行的只读字节跨度。</param>
     protected abstract void ReadRequestLine(ReadOnlySpan<byte> requestLineSpan);
 
-    private void ParseHeaderLine(ReadOnlySpan<byte> line)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ParseHeaderLineOptimized(ReadOnlySpan<byte> line)
     {
-        var colonIndex = line.IndexOf((byte)':');
+        var colonIndex = line.IndexOf(TouchSocketHttpUtility.COLON);
         if (colonIndex <= 0)
         {
-            return; // 无效格式
+            return; // 无效格式，冒号必须存在且不能在第一位
         }
 
-        // 分割键值
-        var keySpan = line.Slice(0, colonIndex).Trim();
-        var valueSpan = line.Slice(colonIndex + 1).Trim();
+        var keySpan = TouchSocketHttpUtility.TrimWhitespace(line.Slice(0, colonIndex));
+        var valueSpan = TouchSocketHttpUtility.TrimWhitespace(line.Slice(colonIndex + 1));
 
-        if (!keySpan.IsEmpty && !valueSpan.IsEmpty)
+        if (keySpan.IsEmpty || valueSpan.IsEmpty)
         {
-            var key = keySpan.ToString(Encoding.UTF8).ToLower();
-            var value = valueSpan.ToString(Encoding.UTF8);
-            this.m_headers[key] = value;
+            return;
         }
+
+        // 只对键进行小写转换，减少字符串分配
+        var key = keySpan.ToString(Encoding.UTF8).ToLowerInvariant();
+        var value = valueSpan.ToString(Encoding.UTF8);
+
+        this.m_headers[key] = value;
     }
 
-    private void ReadHeaders(ReadOnlySpan<byte> span)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ReadHeadersOptimized(ReadOnlySpan<byte> span)
     {
-        //string ss=span.ToString(Encoding.UTF8);
-        this.m_headers.Clear();
-
         // 解析请求行（首个有效行）
-        var lineEnd = span.IndexOf("\r\n"u8);
-        if (lineEnd == -1) // 没有完整请求行
+        var lineEnd = span.IndexOf(TouchSocketHttpUtility.CRLF);
+        if (lineEnd == -1)
         {
-            throw new ArgumentException("Invalid HTTP header format.");
+            ThrowHelper.ThrowException("Invalid HTTP header format.");
         }
 
-        // 提取请求行
+        // 提取并处理请求行
         var requestLineSpan = span.Slice(0, lineEnd);
         this.ReadRequestLine(requestLineSpan);
-        //this.RequestLine = requestLineSpan.ToString(Encoding.UTF8);
 
-        // 跳过请求行及CRLF（+2）
+        // 跳过请求行及CRLF
         var remaining = span.Slice(lineEnd + 2);
 
-        // 解析headers
-        while (true)
+        // 优化的头部解析循环
+        while (!remaining.IsEmpty)
         {
-            // 查找当前行结尾
-            var headerEnd = remaining.IndexOf("\r\n"u8);
+            var headerEnd = remaining.IndexOf(TouchSocketHttpUtility.CRLF);
+
             if (headerEnd == -1)
             {
-                // 如果没有找到\r\n，但还有剩余数据，则将剩余数据作为最后一个header处理
+                // 处理最后一行没有CRLF的情况
                 if (!remaining.IsEmpty)
                 {
-                    this.ParseHeaderLine(remaining);
+                    this.ParseHeaderLineOptimized(remaining);
                 }
                 break;
             }
 
-            // 空行表示headers结束
             if (headerEnd == 0)
             {
-                remaining = remaining.Slice(2); // 跳过空行的CRLF
+                // 空行表示headers结束
                 break;
             }
 
-            // 提取单行header
+            // 提取并解析当前行
             var lineSpan = remaining.Slice(0, headerEnd);
-            this.ParseHeaderLine(lineSpan);
+            this.ParseHeaderLineOptimized(lineSpan);
 
             // 移动到下一行
             remaining = remaining.Slice(headerEnd + 2);
         }
-
-        //this.LoadHeaderProperties();
     }
 
     #region Content

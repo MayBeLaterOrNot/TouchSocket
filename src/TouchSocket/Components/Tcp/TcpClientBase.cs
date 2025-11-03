@@ -282,7 +282,21 @@ public abstract partial class TcpClientBase : SetupConfigObject, ITcpSession
                 {
                     return;
                 }
-                var result = await transport.Reader.ReadAsync(cancellationToken).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
+                var readTask = transport.Reader.ReadAsync(cancellationToken);
+
+                System.IO.Pipelines.ReadResult result;
+
+                // 快速路径：如果读取同步完成
+                if (readTask.IsCompleted)
+                {
+                    result = readTask.Result;
+                }
+                else
+                {
+                    // 慢速路径：异步等待
+                    result = await readTask.ConfigureAwait(false);
+                }
+
                 if (result.Buffer.Length == 0)
                 {
                     break;

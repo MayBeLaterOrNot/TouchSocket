@@ -10,19 +10,22 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace TouchSocket.Core;
 
 /// <summary>
 /// Xml字符串转换器
 /// </summary>
 /// <typeparam name="TState"></typeparam>
-public class XmlStringToClassSerializerFormatter<TState> : ISerializerFormatter<string, TState>
+[RequiresUnreferencedCode("Members from deserialized types may be trimmed if not referenced directly")]
+public class XmlStringToClassSerializerFormatter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState> : ISerializerFormatter<string, TState>
 {
     /// <inheritdoc/>
     public int Order { get; set; }
 
     /// <inheritdoc/>
-    public virtual bool TryDeserialize(TState state, in string source, Type targetType, out object target)
+    public virtual bool TryDeserialize(TState state, in string source, [DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] Type targetType, out object target)
     {
         try
         {

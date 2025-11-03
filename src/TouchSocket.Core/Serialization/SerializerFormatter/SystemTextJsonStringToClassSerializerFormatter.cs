@@ -10,6 +10,7 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace TouchSocket.Core;
@@ -18,7 +19,7 @@ namespace TouchSocket.Core;
 /// 使用System.Text.Json进行字符串与类之间序列化和反序列化的格式化器。
 /// </summary>
 /// <typeparam name="TState">状态类型。</typeparam>
-public class SystemTextJsonStringToClassSerializerFormatter<TState> : ISerializerFormatter<string, TState>
+public class SystemTextJsonStringToClassSerializerFormatter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState> : ISerializerFormatter<string, TState>
 {
     /// <summary>
     /// 获取或设置Json序列化选项。
@@ -38,7 +39,7 @@ public class SystemTextJsonStringToClassSerializerFormatter<TState> : ISerialize
     /// <param name="targetType">目标类型。</param>
     /// <param name="target">反序列化后的对象。</param>
     /// <returns>如果反序列化成功，则为<see langword="true"/>；否则为<see langword="false"/>。</returns>
-    public bool TryDeserialize(TState state, in string source, Type targetType, out object target)
+    public bool TryDeserialize(TState state, in string source, [DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] Type targetType, out object target)
     {
         try
         {

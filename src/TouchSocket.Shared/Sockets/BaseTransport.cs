@@ -11,6 +11,7 @@
 // ------------------------------------------------------------------------------
 
 using System.IO.Pipelines;
+using System.Runtime.CompilerServices;
 using TouchSocket.Resources;
 
 namespace TouchSocket.Sockets;
@@ -28,8 +29,8 @@ internal abstract class BaseTransport : SafetyDisposableObject, ITransport
     private readonly SemaphoreSlim m_readLocker = new SemaphoreSlim(1, 1);
     protected readonly CancellationTokenSource m_tokenSource = new CancellationTokenSource();
     private readonly SemaphoreSlim m_writeLocker = new SemaphoreSlim(1, 1);
-    private int m_receiveBufferSize = 1024 * 10;
-    private int m_sendBufferSize = 1024 * 10;
+    private int m_cachedReceiveBufferSize = 1024 * 10;
+    private int m_cachedSendBufferSize = 1024 * 10;
 
     public BaseTransport(TransportOption option)
     {
@@ -45,6 +46,10 @@ internal abstract class BaseTransport : SafetyDisposableObject, ITransport
         this.m_sentCounter = new ValueCounter(TimeSpan.FromSeconds(1), this.OnSendPeriod);
         this.m_maxBufferSize = maxBufferSize;
         this.m_minBufferSize = minBufferSize;
+
+        // 初始化缓存的缓冲区大小
+        this.m_cachedReceiveBufferSize = this.ClampBufferSize(1024 * 10);
+        this.m_cachedSendBufferSize = this.ClampBufferSize(1024 * 10);
     }
 
     public ClosedEventArgs ClosedEventArgs => this.m_closedEventArgs ?? s_defaultClosedEventArgs;
@@ -61,7 +66,7 @@ internal abstract class BaseTransport : SafetyDisposableObject, ITransport
     /// <summary>
     /// 接收缓存池，运行时的值会根据流速自动调整
     /// </summary>
-    public int ReceiveBufferSize => Math.Min(Math.Max(this.m_receiveBufferSize, this.m_minBufferSize), this.m_maxBufferSize);
+    public int ReceiveBufferSize => this.m_cachedReceiveBufferSize;
 
     /// <summary>
     /// 接收计数器
@@ -71,7 +76,7 @@ internal abstract class BaseTransport : SafetyDisposableObject, ITransport
     /// <summary>
     /// 发送缓存池，运行时的值会根据流速自动调整
     /// </summary>
-    public int SendBufferSize => Math.Min(Math.Max(this.m_sendBufferSize, this.m_minBufferSize), this.m_maxBufferSize);
+    public int SendBufferSize => this.m_cachedSendBufferSize;
 
     /// <summary>
     /// 发送计数器
@@ -132,13 +137,52 @@ internal abstract class BaseTransport : SafetyDisposableObject, ITransport
         _ = EasyTask.SafeRun(this.RunSend, this.m_tokenSource.Token);
     }
 
+    /// <summary>
+    /// 将缓冲区大小限制在最小值和最大值之间
+    /// </summary>
+    /// <param name="size">原始缓冲区大小</param>
+    /// <returns>限制后的缓冲区大小</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int ClampBufferSize(int size)
+    {
+        return Math.Min(Math.Max(size, this.m_minBufferSize), this.m_maxBufferSize);
+    }
+
     private void OnReceivePeriod(long value)
     {
-        this.m_receiveBufferSize = Math.Max(TouchSocketCoreUtility.HitBufferLength(value), this.m_minBufferSize);
+        var newSize = CalculateOptimalBufferSize(value);
+        this.m_cachedReceiveBufferSize = this.ClampBufferSize(newSize);
     }
 
     private void OnSendPeriod(long value)
     {
-        this.m_sendBufferSize = Math.Max(TouchSocketCoreUtility.HitBufferLength(value), this.m_minBufferSize);
+        var newSize = CalculateOptimalBufferSize(value);
+        this.m_cachedSendBufferSize = this.ClampBufferSize(newSize);
+    }
+
+    /// <summary>
+    /// 根据数据流量计算最优缓冲区大小
+    /// </summary>
+    /// <param name="bytesPerSecond">每秒字节数</param>
+    /// <returns>建议的缓冲区大小</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int CalculateOptimalBufferSize(long bytesPerSecond)
+    {
+        // 定义缓冲区大小常量，提高可读性和可维护性
+        const int KB = 1024;
+        const int MB = KB * 1024;
+        const int GB = MB * 1024;
+
+        return bytesPerSecond switch
+        {
+            < 100 * KB => KB,          // <100KB/s: 1KB缓冲区
+            < 512 * KB => 10 * KB,            // <512KB/s: 10KB缓冲区
+            < MB => 64 * KB,               // <1MB/s: 64KB缓冲区
+            < 50 * MB => 512 * KB,      // <50MB/s: 512KB缓冲区
+            < 100 * MB => MB,               // <100MB/s: 1MB缓冲区
+            < GB => 2 * MB,  // <1GB/s: 2MB缓冲区
+            < 10L * GB => 5 * MB,         // <10GB/s: 5MB缓冲区
+            _ => 10 * MB   // >=10GB/s: 10MB缓冲区
+        };
     }
 }

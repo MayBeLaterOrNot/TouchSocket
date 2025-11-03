@@ -21,10 +21,7 @@ namespace TouchSocket.Core;
 /// </summary>
 public static class CoreContainerExtension
 {
-    /// <summary>
-    /// DynamicallyAccessed
-    /// </summary>
-    public const DynamicallyAccessedMemberTypes DynamicallyAccessed = DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.PublicProperties;
+
 
     #region RegisterSingleton
 
@@ -36,7 +33,7 @@ public static class CoreContainerExtension
     /// <param name="registrator"></param>
     /// <param name="instance"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(DynamicallyAccessed)] TTo>(this IRegistrator registrator, TTo instance)
+    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] TTo>(this IRegistrator registrator, TTo instance)
                  where TFrom : class
           where TTo : class, TFrom
     {
@@ -68,7 +65,7 @@ public static class CoreContainerExtension
     /// <param name="fromType"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static IRegistrator RegisterSingleton(this IRegistrator registrator, [DynamicallyAccessedMembers(DynamicallyAccessed)] Type fromType)
+    public static IRegistrator RegisterSingleton(this IRegistrator registrator, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] Type fromType)
     {
         if (fromType is null)
         {
@@ -88,7 +85,7 @@ public static class CoreContainerExtension
     /// <param name="key"></param>
     /// <param name="instance"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(DynamicallyAccessed)] TTo>(this IRegistrator registrator, string key, TTo instance)
+    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] TTo>(this IRegistrator registrator, string key, TTo instance)
                           where TFrom : class
                   where TTo : class, TFrom
     {
@@ -169,7 +166,7 @@ public static class CoreContainerExtension
     /// <typeparam name="TFrom"></typeparam>
     /// <param name="registrator"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterSingleton<[DynamicallyAccessedMembers(DynamicallyAccessed)] TFrom>(this IRegistrator registrator)
+    public static IRegistrator RegisterSingleton<[DynamicallyAccessedMembers(AOT.ContainerMemberType)] TFrom>(this IRegistrator registrator)
     {
         registrator.Register(new DependencyDescriptor(typeof(TFrom), typeof(TFrom), Lifetime.Singleton));
         return registrator;
@@ -182,7 +179,7 @@ public static class CoreContainerExtension
     /// <param name="registrator"></param>
     /// <param name="key"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterSingleton<[DynamicallyAccessedMembers(DynamicallyAccessed)] TFrom>(this IRegistrator registrator, string key)
+    public static IRegistrator RegisterSingleton<[DynamicallyAccessedMembers(AOT.ContainerMemberType)] TFrom>(this IRegistrator registrator, string key)
     {
         registrator.Register(new DependencyDescriptor(typeof(TFrom), typeof(TFrom), Lifetime.Singleton), key);
         return registrator;
@@ -195,7 +192,7 @@ public static class CoreContainerExtension
     /// <param name="fromType"></param>
     /// <param name="toType"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterSingleton(this IRegistrator registrator, Type fromType, [DynamicallyAccessedMembers(DynamicallyAccessed)] Type toType)
+    public static IRegistrator RegisterSingleton(this IRegistrator registrator, Type fromType, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] Type toType)
     {
         registrator.Register(new DependencyDescriptor(fromType, toType, Lifetime.Singleton));
         return registrator;
@@ -209,7 +206,7 @@ public static class CoreContainerExtension
     /// <param name="toType"></param>
     /// <param name="key"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterSingleton(this IRegistrator registrator, Type fromType, [DynamicallyAccessedMembers(DynamicallyAccessed)] Type toType, string key)
+    public static IRegistrator RegisterSingleton(this IRegistrator registrator, Type fromType, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] Type toType, string key)
 
     {
         registrator.Register(new DependencyDescriptor(fromType, toType, Lifetime.Singleton), key);
@@ -239,7 +236,7 @@ public static class CoreContainerExtension
     /// <param name="registrator"></param>
     /// <param name="func"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(DynamicallyAccessed)] TTo>(this IRegistrator registrator, Func<IResolver, object> func)
+    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] TTo>(this IRegistrator registrator, Func<IResolver, object> func)
     {
         registrator.Register(new DependencyDescriptor(typeof(TFrom), typeof(TTo), Lifetime.Singleton)
         {
@@ -273,7 +270,7 @@ public static class CoreContainerExtension
     /// <param name="func"></param>
     /// <param name="key"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(DynamicallyAccessed)] TTo>(this IRegistrator registrator, Func<IResolver, object> func, string key)
+    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] TTo>(this IRegistrator registrator, Func<IResolver, object> func, string key)
     {
         registrator.Register(new DependencyDescriptor(typeof(TFrom), typeof(TTo), Lifetime.Singleton)
         {
@@ -322,7 +319,7 @@ public static class CoreContainerExtension
     /// <typeparam name="TTO"></typeparam>
     /// <param name="registrator"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(DynamicallyAccessed)] TTO>(this IRegistrator registrator) where TFrom : class
+    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] TTO>(this IRegistrator registrator) where TFrom : class
                  where TTO : class, TFrom
     {
         RegisterSingleton(registrator, typeof(TFrom), typeof(TTO));
@@ -337,7 +334,7 @@ public static class CoreContainerExtension
     /// <param name="registrator"></param>
     /// <param name="key"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(DynamicallyAccessed)] TTO>(this IRegistrator registrator, string key)
+    public static IRegistrator RegisterSingleton<TFrom, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] TTO>(this IRegistrator registrator, string key)
                   where TFrom : class
           where TTO : class, TFrom
     {
@@ -356,7 +353,7 @@ public static class CoreContainerExtension
     /// <typeparam name="TTO"></typeparam>
     /// <param name="registrator"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterTransient<TFrom, [DynamicallyAccessedMembers(DynamicallyAccessed)] TTO>(this IRegistrator registrator)
+    public static IRegistrator RegisterTransient<TFrom, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] TTO>(this IRegistrator registrator)
                 where TFrom : class
          where TTO : class, TFrom
     {
@@ -370,7 +367,7 @@ public static class CoreContainerExtension
     /// <typeparam name="TFrom"></typeparam>
     /// <param name="registrator"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterTransient<[DynamicallyAccessedMembers(DynamicallyAccessed)] TFrom>(this IRegistrator registrator)
+    public static IRegistrator RegisterTransient<[DynamicallyAccessedMembers(AOT.ContainerMemberType)] TFrom>(this IRegistrator registrator)
                   where TFrom : class
     {
         RegisterTransient(registrator, typeof(TFrom), typeof(TFrom));
@@ -384,7 +381,7 @@ public static class CoreContainerExtension
     /// <param name="registrator"></param>
     /// <param name="key"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterTransient<[DynamicallyAccessedMembers(DynamicallyAccessed)] TFrom>(this IRegistrator registrator, string key)
+    public static IRegistrator RegisterTransient<[DynamicallyAccessedMembers(AOT.ContainerMemberType)] TFrom>(this IRegistrator registrator, string key)
                   where TFrom : class
     {
         RegisterTransient(registrator, typeof(TFrom), typeof(TFrom), key);
@@ -399,7 +396,7 @@ public static class CoreContainerExtension
     /// <param name="registrator"></param>
     /// <param name="key"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterTransient<TFrom, [DynamicallyAccessedMembers(DynamicallyAccessed)] TTO>(this IRegistrator registrator, string key)
+    public static IRegistrator RegisterTransient<TFrom, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] TTO>(this IRegistrator registrator, string key)
                  where TFrom : class
          where TTO : class, TFrom
     {
@@ -413,7 +410,7 @@ public static class CoreContainerExtension
     /// <param name="registrator"></param>
     /// <param name="fromType"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterTransient(this IRegistrator registrator, [DynamicallyAccessedMembers(DynamicallyAccessed)] Type fromType)
+    public static IRegistrator RegisterTransient(this IRegistrator registrator, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] Type fromType)
     {
         RegisterTransient(registrator, fromType, fromType);
         return registrator;
@@ -426,7 +423,7 @@ public static class CoreContainerExtension
     /// <param name="fromType"></param>
     /// <param name="key"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterTransient(this IRegistrator registrator, [DynamicallyAccessedMembers(DynamicallyAccessed)] Type fromType, string key)
+    public static IRegistrator RegisterTransient(this IRegistrator registrator, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] Type fromType, string key)
     {
         RegisterTransient(registrator, fromType, fromType, key);
         return registrator;
@@ -439,7 +436,7 @@ public static class CoreContainerExtension
     /// <param name="fromType"></param>
     /// <param name="toType"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterTransient(this IRegistrator registrator, Type fromType, [DynamicallyAccessedMembers(DynamicallyAccessed)] Type toType)
+    public static IRegistrator RegisterTransient(this IRegistrator registrator, Type fromType, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] Type toType)
     {
         registrator.Register(new DependencyDescriptor(fromType, toType, Lifetime.Transient));
         return registrator;
@@ -453,7 +450,7 @@ public static class CoreContainerExtension
     /// <param name="toType"></param>
     /// <param name="key"></param>
     /// <returns></returns>
-    public static IRegistrator RegisterTransient(this IRegistrator registrator, Type fromType, [DynamicallyAccessedMembers(DynamicallyAccessed)] Type toType, string key)
+    public static IRegistrator RegisterTransient(this IRegistrator registrator, Type fromType, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] Type toType, string key)
     {
         registrator.Register(new DependencyDescriptor(fromType, toType, Lifetime.Transient), key);
         return registrator;
@@ -585,7 +582,7 @@ public static class CoreContainerExtension
     /// <typeparam name="T"></typeparam>
     /// <param name="resolver"></param>
     /// <returns></returns>
-    public static T Resolve<[DynamicallyAccessedMembers(DynamicallyAccessed)] T>(this IServiceProvider resolver)
+    public static T Resolve<[DynamicallyAccessedMembers(AOT.ContainerMemberType)] T>(this IServiceProvider resolver)
     {
         return (T)resolver.GetService(typeof(T));
     }
@@ -597,7 +594,7 @@ public static class CoreContainerExtension
     /// <param name="resolver"></param>
     /// <param name="key"></param>
     /// <returns></returns>
-    public static T Resolve<[DynamicallyAccessedMembers(DynamicallyAccessed)] T>(this IResolver resolver, string key)
+    public static T Resolve<[DynamicallyAccessedMembers(AOT.ContainerMemberType)] T>(this IResolver resolver, string key)
     {
         return (T)resolver.Resolve(typeof(T), key);
     }
@@ -609,7 +606,7 @@ public static class CoreContainerExtension
     /// <param name="fromType"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public static object ResolveWithoutRoot(this IServiceProvider resolver, [DynamicallyAccessedMembers(DynamicallyAccessed)] Type fromType)
+    public static object ResolveWithoutRoot(this IServiceProvider resolver, [DynamicallyAccessedMembers(AOT.ContainerMemberType)] Type fromType)
     {
         object[] ops = null;
         var ctor = fromType.GetConstructors().FirstOrDefault(x => x.IsDefined(typeof(DependencyInjectAttribute), true));
@@ -670,7 +667,7 @@ public static class CoreContainerExtension
     /// <param name="resolver"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public static T ResolveWithoutRoot<[DynamicallyAccessedMembers(DynamicallyAccessed)] T>(this IServiceProvider resolver)
+    public static T ResolveWithoutRoot<[DynamicallyAccessedMembers(AOT.ContainerMemberType)] T>(this IServiceProvider resolver)
     {
         return (T)ResolveWithoutRoot(resolver, typeof(T));
     }
@@ -684,7 +681,7 @@ public static class CoreContainerExtension
     /// <typeparam name="T"></typeparam>
     /// <param name="registered"></param>
     /// <returns></returns>
-    public static bool IsRegistered<[DynamicallyAccessedMembers(DynamicallyAccessed)] T>(this IRegistered registered)
+    public static bool IsRegistered<[DynamicallyAccessedMembers(AOT.ContainerMemberType)] T>(this IRegistered registered)
     {
         return registered.IsRegistered(typeof(T));
     }
@@ -696,7 +693,7 @@ public static class CoreContainerExtension
     /// <param name="registered"></param>
     /// <param name="key"></param>
     /// <returns></returns>
-    public static bool IsRegistered<[DynamicallyAccessedMembers(DynamicallyAccessed)] T>(this IRegistered registered, string key)
+    public static bool IsRegistered<[DynamicallyAccessedMembers(AOT.ContainerMemberType)] T>(this IRegistered registered, string key)
     {
         return registered.IsRegistered(typeof(T), key);
     }

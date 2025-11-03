@@ -16,6 +16,27 @@ namespace TouchSocket.Sockets;
 
 internal sealed class SocketReceiver : SocketAwaitableEventArgs<TcpOperationResult>
 {
+
+    public ValueTask<TcpOperationResult> WaitForDataAsync(Socket socket)
+    {
+        this.m_core.Reset();
+#if NET6_0_OR_GREATER
+        this.SetBuffer(Memory<byte>.Empty);
+#else
+        this.SetBuffer([], 0, 0);
+#endif
+
+        if (socket.ReceiveAsync(this))
+        {
+            return new ValueTask<TcpOperationResult>(this, this.m_core.Version);
+        }
+
+        var bytesTransferred = this.BytesTransferred;
+        var error = this.SocketError;
+
+        return new ValueTask<TcpOperationResult>(new TcpOperationResult(bytesTransferred, error));
+    }
+
     public ValueTask<TcpOperationResult> ReceiveAsync(Socket socket, Memory<byte> buffer)
     {
         this.m_core.Reset();

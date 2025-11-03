@@ -22,7 +22,7 @@ public static class GlobalEnvironment
     /// <summary>
     /// 动态构建类型，默认使用IL
     /// </summary>
-    public static DynamicBuilderType DynamicBuilderType { get; set; } = DynamicBuilderType.IL;
+    public static DynamicBuilderType DynamicBuilderType { get; set; } = DynamicBuilderType.SourceGenerator;
 
 #if NET6_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 

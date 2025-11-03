@@ -37,10 +37,9 @@ public abstract class FastSerializerContext
     /// 获取新实例
     /// </summary>
     /// <param name="type"></param>
-    /// <returns></returns>
-    public virtual object GetNewInstance(Type type)
+    public virtual object GetNewInstance([DynamicallyAccessedMembers(FastBinaryFormatter.DynamicallyAccessed)] Type type)
     {
-        return InstanceCreater.Create(type, null);
+        return Activator.CreateInstance(type, null);
     }
 
     /// <summary>

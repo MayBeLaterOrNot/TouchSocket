@@ -17,6 +17,7 @@ namespace TouchSocket.Core;
 
 internal abstract class DynamicMethodInfoBase : IDynamicMethodInfo
 {
+    [UnconditionalSuppressMessage("Trimming", "IL2072:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "源生成器生成的代码在AOT环境中是安全的")]
     public DynamicMethodInfoBase(MethodInfo method)
     {
         if (method.ReturnType == typeof(void))
@@ -54,7 +55,7 @@ internal abstract class DynamicMethodInfoBase : IDynamicMethodInfo
 
     public MethodReturnKind ReturnKind { get; set; }
 
-    public async Task<object> GetResultAsync([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] object result)
+    public async Task<object> GetResultAsync(object result)
     {
         if (result is Task task)
         {
@@ -69,6 +70,7 @@ internal abstract class DynamicMethodInfoBase : IDynamicMethodInfo
 
     public abstract object Invoke(object instance, object[] parameters);
 
+    [UnconditionalSuppressMessage("Trimming", "IL2075:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "源生成器生成的代码在AOT环境中是安全的")]
     private static bool IsTypeAwaitable([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] Type type, out Type returnType)
     {
         returnType = null;

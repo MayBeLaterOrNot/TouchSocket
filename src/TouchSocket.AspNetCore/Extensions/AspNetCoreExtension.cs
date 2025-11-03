@@ -10,6 +10,7 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using TouchSocket.Dmtp;
 using TouchSocket.Http;
 
@@ -260,7 +261,7 @@ public static class AspNetCoreExtension
     /// <param name="services"></param>
     /// <param name="actionConfig"></param>
     /// <returns></returns>
-    public static IServiceCollection AddHttpDmtpService<TService, TImpService>(this IServiceCollection services, Action<TouchSocketConfig> actionConfig)
+    public static IServiceCollection AddHttpDmtpService<TService, [DynamicallyAccessedMembers(ServiceCollectionExtensions.DynamicallyAccessed)] TImpService>(this IServiceCollection services, Action<TouchSocketConfig> actionConfig)
         where TService : class, IHttpDmtpServiceBase
         where TImpService : class, TService
     {

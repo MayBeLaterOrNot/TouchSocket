@@ -10,6 +10,8 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Runtime.CompilerServices;
+
 namespace TouchSocket.Http;
 
 /// <summary>
@@ -19,13 +21,37 @@ public static class TouchSocketHttpUtility
 {
     public const int MaxReadSize = 1024 * 1024;
 
+    // HTTP头部解析相关常量
+    /// <summary>
+    /// 冒号字节值
+    /// </summary>
+    public const byte COLON = (byte)':';
+    
+    /// <summary>
+    /// 空格字节值
+    /// </summary>
+    public const byte SPACE = (byte)' ';
+    
+    /// <summary>
+    /// 制表符字节值
+    /// </summary>
+    public const byte TAB = (byte)'\t';
+
     /// <summary>
     /// 获取一个只读的字节序列，表示回车换行(CRLF)。
     /// </summary>
     /// <value>
     /// 一个包含回车和换行字节的只读字节序列。
-    /// </value>
+  /// </value>
     public static ReadOnlySpan<byte> CRLF => "\r\n"u8;
+
+    /// <summary>
+    /// 获取一个只读的字节序列，表示双回车换行(CRLFCRLF)。
+    /// </summary>
+    /// <value>
+    /// 一个包含双回车和换行字节的只读字节序列。
+    /// </value>
+    public static ReadOnlySpan<byte> CRLFCRLF => "\r\n\r\n"u8;
 
     /// <summary>
     /// 在 <see cref="IByteBlock"/> 中追加 "&amp;" 符号。
@@ -40,9 +66,9 @@ public static class TouchSocketHttpUtility
     /// <summary>
     /// 在 <see cref="IByteBlock"/> 中追加 ":" 符号。
     /// </summary>
-    /// <typeparam name="TWriter">实现了 <see cref="IByteBlock"/> 的类型。</typeparam>
+  /// <typeparam name="TWriter">实现了 <see cref="IByteBlock"/> 的类型。</typeparam>
     /// <param name="writer">字节块实例。</param>
-    public static void AppendColon<TWriter>(ref TWriter writer) where TWriter : IBytesWriter
+  public static void AppendColon<TWriter>(ref TWriter writer) where TWriter : IBytesWriter
     {
         writer.Write(":"u8);
     }
@@ -61,7 +87,7 @@ public static class TouchSocketHttpUtility
     /// 在 <see cref="IByteBlock"/> 中追加 "HTTP" 字符串。
     /// </summary>
     /// <typeparam name="TWriter">实现了 <see cref="IByteBlock"/> 的类型。</typeparam>
-    /// <param name="writer">字节块实例。</param>
+ /// <param name="writer">字节块实例。</param>
     public static void AppendHTTP<TWriter>(ref TWriter writer) where TWriter : IBytesWriter
     {
         writer.Write("HTTP"u8);
@@ -71,7 +97,7 @@ public static class TouchSocketHttpUtility
     /// 在 <see cref="IByteBlock"/> 中追加 "?" 符号。
     /// </summary>
     /// <typeparam name="TWriter">实现了 <see cref="IByteBlock"/> 的类型。</typeparam>
-    /// <param name="writer">字节块实例。</param>
+  /// <param name="writer">字节块实例。</param>
     public static void AppendQuestionMark<TWriter>(ref TWriter writer) where TWriter : IBytesWriter
     {
         writer.Write("?"u8);
@@ -84,7 +110,7 @@ public static class TouchSocketHttpUtility
     /// <param name="writer">字节块实例。</param>
     public static void AppendRn<TWriter>(ref TWriter writer) where TWriter : IBytesWriter
     {
-        writer.Write("\r\n"u8);
+        writer.Write(CRLF);
     }
 
     /// <summary>
@@ -97,7 +123,7 @@ public static class TouchSocketHttpUtility
         writer.Write("/"u8);
     }
 
-    /// <summary>
+ /// <summary>
     /// 在 <see cref="IByteBlock"/> 中追加空格符。
     /// </summary>
     /// <typeparam name="TWriter">实现了 <see cref="IByteBlock"/> 的类型。</typeparam>
@@ -107,7 +133,7 @@ public static class TouchSocketHttpUtility
         writer.Write(StringExtension.DefaultSpaceUtf8Span);
     }
 
-    /// <summary>
+/// <summary>
     /// 在 <see cref="IByteBlock"/> 中追加指定的 UTF-8 编码字符串。
     /// </summary>
     /// <typeparam name="TWriter">实现了 <see cref="IByteBlock"/> 的类型。</typeparam>
@@ -116,7 +142,7 @@ public static class TouchSocketHttpUtility
     public static void AppendUtf8String<TWriter>(ref TWriter writer, string value) where TWriter : IBytesWriter
     {
         WriterExtension.WriteNormalString(ref writer, value, Encoding.UTF8);
-    }
+ }
 
     /// <summary>
     /// 在 <see cref="IByteBlock"/> 中追加指定整数的十六进制表示。
@@ -126,7 +152,35 @@ public static class TouchSocketHttpUtility
     /// <param name="value">要追加的整数值。</param>
     public static void AppendHex<TWriter>(ref TWriter writer, int value) where TWriter : IBytesWriter
     {
-        AppendUtf8String(ref writer, $"{value:X}");
+   AppendUtf8String(ref writer, $"{value:X}");
+    }
+
+    /// <summary>
+    /// 检查字节是否为HTTP规范允许的空白字符（空格或制表符）
+    /// </summary>
+    /// <param name="b">要检查的字节</param>
+ /// <returns>如果是空白字符返回true，否则返回false</returns>
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool IsWhitespace(byte b) => b == SPACE || b == TAB;
+
+    /// <summary>
+ /// 高效的空白字符去除，避免使用通用的Trim方法
+    /// </summary>
+    /// <param name="span">要处理的字节跨度</param>
+    /// <returns>去除前后空白字符后的字节跨度</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+ internal static ReadOnlySpan<byte> TrimWhitespace(ReadOnlySpan<byte> span)
+    {
+        var start = 0;
+        var end = span.Length - 1;
+
+        while (start <= end && IsWhitespace(span[start]))
+     start++;
+
+        while (end >= start && IsWhitespace(span[end]))
+          end--;
+
+        return start > end ? ReadOnlySpan<byte>.Empty : span.Slice(start, end - start + 1);
     }
 
     internal static string UnescapeDataString(ReadOnlySpan<byte> urlSpan)
@@ -145,15 +199,12 @@ public static class TouchSocketHttpUtility
     internal static string UnescapeDataString(ReadOnlySpan<char> urlSpan)
     {
 #if NET9_0_OR_GREATER
-        return Uri.UnescapeDataString(urlSpan);
+  return Uri.UnescapeDataString(urlSpan);
 #else
         return Uri.UnescapeDataString(urlSpan.ToString());
 #endif
 
-    }
-
-    internal static bool IsWhitespace(byte b) => b == ' ' || b == '\t';
-
+  }
 
     internal static int FindNextWhitespace(ReadOnlySpan<byte> span, int start)
     {
@@ -171,11 +222,11 @@ public static class TouchSocketHttpUtility
     {
         while (start < span.Length && TouchSocketHttpUtility.IsWhitespace(span[start]))
         {
-            start++;
+   start++;
         }
 
         return start;
-    }
+ }
 
     internal static void ProcessKeyValuePair(ReadOnlySpan<char> kvSpan, InternalHttpParams parameters)
     {
@@ -185,20 +236,20 @@ public static class TouchSocketHttpUtility
         if (eqIndex >= 0)
         {
             keySpan = kvSpan.Slice(0, eqIndex);
-            valueSpan = kvSpan.Slice(eqIndex + 1);
+     valueSpan = kvSpan.Slice(eqIndex + 1);
         }
-        else
+   else
         {
             // 处理没有值的键
-            keySpan = kvSpan;
-            valueSpan = [];
+   keySpan = kvSpan;
+      valueSpan = [];
         }
 
-        if (!keySpan.IsEmpty)
+     if (!keySpan.IsEmpty)
         {
-            var key = TouchSocketHttpUtility.UnescapeDataString(keySpan);
-            var value = TouchSocketHttpUtility.UnescapeDataString(valueSpan);
-            parameters.AddOrUpdate(key, value);
+        var key = TouchSocketHttpUtility.UnescapeDataString(keySpan);
+    var value = TouchSocketHttpUtility.UnescapeDataString(valueSpan);
+          parameters.AddOrUpdate(key, value);
         }
     }
 }

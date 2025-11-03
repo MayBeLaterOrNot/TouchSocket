@@ -10,33 +10,27 @@
 // 感谢您的下载和使用
 // ------------------------------------------------------------------------------
 
-namespace TouchSocket.WebApi;
+namespace TouchSocket.Sockets;
 
 /// <summary>
-/// WebApi配置选项。
+/// 重连策略类型
 /// </summary>
-public class WebApiOption
+public enum ReconnectionStrategy : byte
 {
     /// <summary>
-    /// 初始化<see cref="WebApiOption"/>类的新实例。
+    /// 简单重连 - 固定间隔重连
     /// </summary>
-    public WebApiOption()
-    {
-        this.Converter = new WebApiSerializerConverter();
-        this.Converter.AddJsonSerializerFormatter(new Newtonsoft.Json.JsonSerializerSettings());
-    }
-
+    Simple,
     /// <summary>
-    /// 获取WebApi序列化器转换器。
+    /// 指数退避重连 - 每次失败后延迟时间指数增长
     /// </summary>
-    public WebApiSerializerConverter Converter { get; }
-
+    ExponentialBackoff,
     /// <summary>
-    /// 配置序列化器转换器。
+    /// 线性增长重连 - 每次失败后延迟时间线性增长
     /// </summary>
-    /// <param name="action">配置操作</param>
-    public void ConfigureConverter(Action<WebApiSerializerConverter> action)
-    {
-        action.Invoke(this.Converter);
-    }
+    LinearBackoff,
+    /// <summary>
+    /// 自定义重连策略
+    /// </summary>
+    Custom
 }

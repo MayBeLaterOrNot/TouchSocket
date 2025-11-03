@@ -31,8 +31,9 @@ internal sealed class TcpCore : SafetyDisposableObject
 
     #region 字段
 
-    private readonly SocketReceiver m_socketReceiver = new SocketReceiver();
-    private readonly SocketSender m_socketSender = new SocketSender();
+    //private readonly SocketReceiver2 m_socketReceiver = new(System.IO.Pipelines.PipeScheduler.ThreadPool);
+    private readonly SocketReceiver m_socketReceiver = new();
+    private readonly SocketSender m_socketSender = new();
     private Socket m_socket;
 
     #endregion 字段
@@ -41,12 +42,17 @@ internal sealed class TcpCore : SafetyDisposableObject
     public bool SendRunContinuationsAsynchronously { get => this.m_socketSender.RunContinuationsAsynchronously; set => this.m_socketSender.RunContinuationsAsynchronously = value; }
     public Socket Socket => this.m_socket;
 
+
     #region Receive
 
-    public ValueTask<TcpOperationResult> ReceiveAsync(in Memory<byte> memory, CancellationToken cancellationToken)
+    public ValueTask<TcpOperationResult> ReceiveAsync(in Memory<byte> memory)
     {
-        cancellationToken.ThrowIfCancellationRequested();
         return this.m_socketReceiver.ReceiveAsync(this.m_socket, memory);
+    }
+
+    public ValueTask<TcpOperationResult> WaitForDataAsync()
+    {
+        return this.m_socketReceiver.WaitForDataAsync(this.m_socket);
     }
 
     #endregion Receive

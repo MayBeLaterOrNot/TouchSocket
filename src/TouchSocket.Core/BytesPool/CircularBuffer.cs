@@ -26,7 +26,7 @@ public sealed class CircularBuffer<T>
     /// <summary>
     /// 创建指定容量的环形缓冲区。
     /// </summary>
-    /// <param name="capacity">缓冲区容量，必须大于 0</param>
+    /// <param name="capacity">缓冲区容量，必须大于0</param>
     public CircularBuffer(int capacity)
     {
         if (capacity <= 0)
@@ -86,6 +86,34 @@ public sealed class CircularBuffer<T>
         }
     }
 
+    /// <summary>
+    /// 写入后推进写指针。
+    /// </summary>
+    /// <param name="count">写入数量</param>
+    public void AdvanceWrite(int count)
+    {
+        if (count < 0 || count > this.SpaceFree)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count), "写入数量超出可用空间范围");
+        }
+        this.m_writeIndex = (this.m_writeIndex + count) % this.Capacity;
+        this.m_dataCount += count;
+    }
+
+    /// <summary>
+    /// 清空缓冲区，重置读写指针和数据计数。
+    /// </summary>
+    public void Clear()
+    {
+        this.m_readIndex = 0;
+        this.m_writeIndex = 0;
+        this.m_dataCount = 0;
+    }
+
+    /// <summary>
+    /// 获取可写入的内存块。
+    /// </summary>
+    /// <returns>可写入的内存块</returns>
     public Memory<T> GetWriteMemory()
     {
         if (this.IsFull)
@@ -109,25 +137,6 @@ public sealed class CircularBuffer<T>
             var spaceAvailable = this.m_readIndex - this.m_writeIndex;
             return new Memory<T>(this.m_buffer, this.m_writeIndex, spaceAvailable);
         }
-    }
-    public void AdvanceWrite(int count)
-    {
-        if (count < 0 || count > this.SpaceFree)
-        {
-            throw new ArgumentOutOfRangeException(nameof(count), "写入数量超出可用空间范围");
-        }
-        this.m_writeIndex = (this.m_writeIndex + count) % this.Capacity;
-        this.m_dataCount += count;
-    }
-
-    /// <summary>
-    /// 清空缓冲区，重置读写指针和数据计数。
-    /// </summary>
-    public void Clear()
-    {
-        this.m_readIndex = 0;
-        this.m_writeIndex = 0;
-        this.m_dataCount = 0;
     }
 
     /// <summary>
@@ -256,4 +265,3 @@ public sealed class CircularBuffer<T>
         return toWrite;
     }
 }
-

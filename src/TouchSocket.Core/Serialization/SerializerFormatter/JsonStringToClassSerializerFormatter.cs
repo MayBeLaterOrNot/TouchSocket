@@ -11,13 +11,14 @@
 //------------------------------------------------------------------------------
 
 using Newtonsoft.Json;
+using System.Diagnostics.CodeAnalysis;
 
 namespace TouchSocket.Core;
 
 /// <summary>
 /// Json字符串转到对应类
 /// </summary>
-public class JsonStringToClassSerializerFormatter<TState> : ISerializerFormatter<string, TState>
+public class JsonStringToClassSerializerFormatter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState> : ISerializerFormatter<string, TState>
 {
     /// <inheritdoc/>
     public int Order { get; set; }
@@ -33,7 +34,7 @@ public class JsonStringToClassSerializerFormatter<TState> : ISerializerFormatter
     /// <param name="targetType"></param>
     /// <param name="target"></param>
     /// <returns></returns>
-    public virtual bool TryDeserialize(TState state, in string source, Type targetType, out object target)
+    public virtual bool TryDeserialize(TState state, in string source, [DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] Type targetType, out object target)
     {
         try
         {

@@ -11,7 +11,6 @@
 //------------------------------------------------------------------------------
 
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace TouchSocket.Core;
@@ -44,18 +43,18 @@ public class DynamicMethodMemberAccessor : IMemberAccessor
     public Func<Type, PropertyInfo[]> OnGetProperties { get; set; }
 
     /// <inheritdoc/>
-    public object GetValue([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] object instance, string memberName)
+    public object GetValue(object instance, string memberName)
     {
         return this.FindClassAccessor(instance).GetValue(instance, memberName);
     }
 
     /// <inheritdoc/>
-    public void SetValue([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] object instance, string memberName, object newValue)
+    public void SetValue(object instance, string memberName, object newValue)
     {
         this.FindClassAccessor(instance).SetValue(instance, memberName, newValue);
     }
 
-    private IMemberAccessor FindClassAccessor([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] object instance)
+    private IMemberAccessor FindClassAccessor(object instance)
     {
         var typeKey = instance.GetType();
         if (!this.m_classAccessors.TryGetValue(typeKey, out var classAccessor))

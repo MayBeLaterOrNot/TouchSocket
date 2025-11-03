@@ -11,6 +11,7 @@
 //------------------------------------------------------------------------------
 
 using Newtonsoft.Json;
+using System.Diagnostics.CodeAnalysis;
 
 namespace TouchSocket.Core;
 
@@ -19,7 +20,7 @@ namespace TouchSocket.Core;
 /// 该类实现了 ISerializerFormatter 接口，特化于 ReadOnlyMemory{byte} 类型的输入和 TState 类型的输出。
 /// </summary>
 /// <typeparam name="TState">要反序列化的状态类类型。</typeparam>
-public class JsonMemoryToClassSerializerFormatter<TState> : ISerializerFormatter<ReadOnlyMemory<byte>, TState>
+public class JsonMemoryToClassSerializerFormatter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState> : ISerializerFormatter<ReadOnlyMemory<byte>, TState>
 {
     /// <summary>
     /// JsonSettings
@@ -30,7 +31,7 @@ public class JsonMemoryToClassSerializerFormatter<TState> : ISerializerFormatter
     public int Order { get; set; }
 
     /// <inheritdoc/>
-    public bool TryDeserialize(TState state, in ReadOnlyMemory<byte> source, Type targetType, out object target)
+    public bool TryDeserialize(TState state, in ReadOnlyMemory<byte> source, [DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] Type targetType, out object target)
     {
         try
         {

@@ -20,7 +20,7 @@ namespace TouchSocket.Core;
 /// 动态成员访问器
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class MemberAccessor<T> : MemberAccessor
+public class MemberAccessor<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T> : MemberAccessor
 {
     /// <summary>
     /// 动态成员访问器
@@ -44,10 +44,10 @@ public class MemberAccessor : IMemberAccessor
     /// 动态成员访问器
     /// </summary>
     /// <param name="type"></param>
-    public MemberAccessor([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] Type type)
+    public MemberAccessor([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
     {
         this.Type = type;
-        this.OnGetFieldInfos = (t) => { return t.GetFields(); };
+        this.OnGetFieldInfos = (t) => { return t.GetFields(BindingFlags.Public); };
         this.OnGetProperties = (t) => { return t.GetProperties(); };
     }
 
@@ -64,6 +64,7 @@ public class MemberAccessor : IMemberAccessor
     /// <summary>
     /// 所属类型
     /// </summary>
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
     public Type Type { get; }
 
     /// <summary>

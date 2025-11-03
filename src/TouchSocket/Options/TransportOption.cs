@@ -48,6 +48,8 @@ public class TransportOption
     /// </summary>
     public PipeOptions SendPipeOptions { get; set; }
 
+    public bool BufferOnDemand { get; set; } = true;
+
     /// <summary>
     /// 创建默认的 <see cref="PipeOptions"/>。
     /// </summary>

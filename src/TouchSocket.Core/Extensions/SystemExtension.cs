@@ -10,9 +10,9 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
-using Newtonsoft.Json.Linq;
 using System.Buffers;
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
 using System.Reflection;
@@ -411,7 +411,7 @@ public static class SystemExtension
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    public static object GetDefault(this Type type)
+    public static object GetDefault([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] this Type type)
     {
         return type.IsValueType ? Activator.CreateInstance(type) : null;
     }

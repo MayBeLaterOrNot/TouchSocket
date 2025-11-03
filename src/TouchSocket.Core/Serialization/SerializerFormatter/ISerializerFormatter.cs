@@ -10,12 +10,14 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace TouchSocket.Core;
 
 /// <summary>
 /// 转换器接口
 /// </summary>
-public interface ISerializerFormatter<TSource, TState>
+public interface ISerializerFormatter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TSource, [DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState>
 {
     /// <summary>
     /// 转换器执行顺序
@@ -32,7 +34,7 @@ public interface ISerializerFormatter<TSource, TState>
     /// <param name="targetType"></param>
     /// <param name="target"></param>
     /// <returns></returns>
-    bool TryDeserialize(TState state, in TSource source, Type targetType, out object target);
+    bool TryDeserialize(TState state, in TSource source, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type targetType, out object target);
 
     /// <summary>
     /// 尝试将目标类型对象转换源数据

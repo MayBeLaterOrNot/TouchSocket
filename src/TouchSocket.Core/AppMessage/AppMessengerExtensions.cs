@@ -10,6 +10,7 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace TouchSocket.Core;
@@ -60,7 +61,7 @@ public static class AppMessengerExtensions
         appMessenger.Add(token, new MessageInstance(methodInfo, messageObject));
     }
 
-  
+
     /// <summary>
     /// 注册类型 <typeparamref name="T"/> 中标记为 <see cref="AppMessageAttribute"/> 的静态方法到 <see cref="AppMessenger"/>。
     /// </summary>
@@ -122,11 +123,13 @@ public static class AppMessengerExtensions
         appMessenger.Remove(token);
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2070:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "源生成器生成的代码在AOT环境中是安全的")]
     private static MethodInfo[] GetInstanceMethods(Type type)
     {
         return type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2070:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "源生成器生成的代码在AOT环境中是安全的")]
     private static MethodInfo[] GetStaticMethods(Type type)
     {
         return type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);

@@ -10,6 +10,8 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace TouchSocket.Core;
 
 /// <summary>
@@ -17,7 +19,7 @@ namespace TouchSocket.Core;
 /// </summary>
 /// <typeparam name="TSource">源数据类型。</typeparam>
 /// <typeparam name="TState">状态类型。</typeparam>
-public class TouchSocketSerializerConverter<TSource, TState>
+public class TouchSocketSerializerConverter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TSource, [DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState>
 {
     private readonly List<ISerializerFormatter<TSource, TState>> m_converters = new List<ISerializerFormatter<TSource, TState>>();
 
@@ -76,7 +78,7 @@ public class TouchSocketSerializerConverter<TSource, TState>
     /// <param name="targetType">目标类型</param>
     /// <returns>转换后的目标类型对象</returns>
     /// <exception cref="Exception">当无法转换时抛出异常</exception>
-    public virtual object Deserialize(TState state, TSource source, Type targetType)
+    public virtual object Deserialize(TState state, TSource source, [DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] Type targetType)
     {
         foreach (var item in this.m_converters)
         {

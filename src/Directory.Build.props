@@ -116,6 +116,7 @@
 	<PropertyGroup Condition="'$(IsSourceGenerator)'!='True'">
 		<PackageIcon>logo.png</PackageIcon>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<IsAotCompatible>true</IsAotCompatible>
 	</PropertyGroup>
 
 	<!--Release发布配置相关-->

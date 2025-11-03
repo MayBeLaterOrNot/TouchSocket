@@ -1,17 +1,17 @@
 //------------------------------------------------------------------------------
-//  此代码版权（除特别声明或在XREF结尾的命名空间的代码）归作者本人若汝棋茗所有
-//  源代码使用协议遵循本仓库的开源协议及附加协议，若本仓库没有设置，则按MIT开源协议授权
-//  CSDN博客：https://blog.csdn.net/qq_40374647
-//  哔哩哔哩视频：https://space.bilibili.com/94253567
-//  Gitee源代码仓库：https://gitee.com/RRQM_Home
-//  Github源代码仓库：https://github.com/RRQM
-//  API首页：https://touchsocket.net/
-//  交流QQ群：234762506
-//  感谢您的下载和使用
+// 此代码版权（除特别声明或在XREF结尾的命名空间的代码）归作者本人若汝棋茗所有
+// 源代码使用协议遵循本仓库的开源协议及附加协议，若本仓库没有设置，则按MIT开源协议授权
+// CSDN博客：https://blog.csdn.net/qq_40374647
+// 哔哩哔哩视频：https://space.bilibili.com/94253567
+// Gitee源代码仓库：https://gitee.com/RRQM_Home
+// Github源代码仓库：https://github.com/RRQM
+// API首页：https://touchsocket.net/
+//交流QQ群：234762506
+// 感谢您的下载和使用
 //------------------------------------------------------------------------------
 
 using System.Collections.Concurrent;
-using System.Reflection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace TouchSocket.Core;
 
@@ -33,9 +33,9 @@ public static partial class Mapper
     /// <returns>一个新创建的目标类型实例，其属性根据源对象的属性值进行映射。</returns>
     public static TTarget Map<TTarget>(this object source, MapperOption option = default) where TTarget : class, new()
     {
-        // 调用泛型方法 Map，将源对象、目标类型和映射选项传递给它
-        // 由于目标类型的实例化和类型转换由 Map 方法内部处理，这里直接返回转换后的结果
-        return (TTarget)Map(source, typeof(TTarget), option);
+        var target = new TTarget();
+        Map(source, target, option);
+        return target;
     }
 
 
@@ -48,8 +48,9 @@ public static partial class Mapper
     /// <returns>返回映射后的目标对象。</returns>
     public static TTarget Map<TTarget>(this TTarget source, MapperOption option = default) where TTarget : class, new()
     {
-        // 调用泛型方法 Map，将源对象映射为目标对象
-        return (TTarget)Map(source, typeof(TTarget), option);
+        var target = new TTarget();
+        Map(source, target, option);
+        return target;
     }
 
 
@@ -63,9 +64,9 @@ public static partial class Mapper
     /// <returns>返回映射后的目标对象实例。</returns>
     public static TTarget Map<TSource, TTarget>(this TSource source, MapperOption option = default) where TTarget : class, new()
     {
-        // 调用泛型映射方法，将源对象、目标类型和映射选项传递给它
-        // 由于目标类型在运行时才能确定，这里使用反射来动态调用合适的映射方法
-        return (TTarget)Map(source, typeof(TTarget), option);
+        var target = new TTarget();
+        Map(source, target, option);
+        return target;
     }
 
 
@@ -76,9 +77,10 @@ public static partial class Mapper
     /// <param name="targetType">目标类型的 <see cref="Type"/>。</param>
     /// <param name="option">映射选项，用于控制映射行为。</param>
     /// <returns>映射后的目标类型实例。</returns>
-    public static object Map(this object source, Type targetType, MapperOption option = default)
+    public static object Map(this object source,
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicProperties)]
+ Type targetType, MapperOption option = default)
     {
-        // 使用 Activator.CreateInstance 创建目标类型的实例，并将源对象映射到该实例
         return Map(source, Activator.CreateInstance(targetType), option);
     }
 
@@ -101,24 +103,26 @@ public static partial class Mapper
         {
             return source;
         }
+
         var sourcePairs = m_typeToProperty.GetOrAdd(sourceType, (k) =>
-           {
-               var pairs = new Dictionary<string, Property>();
-               var ps = k.GetProperties(BindingFlags.Default | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-               foreach (var item in ps)
-               {
-                   pairs.Add(item.Name, new Property(item));
-               }
-               return pairs;
-           });
+        {
+            var pairs = new Dictionary<string, Property>();
+            var ps = Property.GetProperties(k);
+            foreach (var item in ps)
+            {
+                // 防止重复键覆盖异常，后出现的覆盖前者
+                pairs[item.Name] = item;
+            }
+            return pairs;
+        });
 
         var targetPairs = m_typeToProperty.GetOrAdd(target.GetType(), (k) =>
         {
             var pairs = new Dictionary<string, Property>();
-            var ps = k.GetProperties(BindingFlags.Default | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var ps = Property.GetProperties(k);
             foreach (var item in ps)
             {
-                pairs.Add(item.Name, new Property(item));
+                pairs[item.Name] = item;
             }
             return pairs;
         });
@@ -128,9 +132,9 @@ public static partial class Mapper
             if (item.Value.CanRead)
             {
                 var pkey = item.Key;
-                if (option != null && option.MapperProperties != null && option.MapperProperties.ContainsKey(pkey))
+                if (option?.MapperProperties != null && option.MapperProperties.TryGetValue(pkey, out var mappedName))
                 {
-                    pkey = option.MapperProperties[pkey];
+                    pkey = mappedName;
                 }
 
                 if (option?.IgnoreProperties?.Contains(pkey) == true)

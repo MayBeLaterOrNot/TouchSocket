@@ -17,49 +17,20 @@ namespace TouchSocket.Sockets;
 /// <summary>
 /// 重连插件
 /// </summary>
+/// <typeparam name="TClient">客户端类型</typeparam>
 public class ReconnectionPlugin<TClient> : PluginBase, ILoadedConfigPlugin
-    where TClient : IConnectableClient, IOnlineClient, IDependencyClient
+    where TClient : IConnectableClient, IOnlineClient, IDependencyClient, IClosableClient
 {
     private readonly CancellationTokenSource m_cts = new CancellationTokenSource();
-    private readonly TimeSpan m_pollingInterval;
-    private readonly Func<TClient, int, Task<ConnectionCheckResult>> m_checkAction;
-    private readonly Func<TClient, CancellationToken, Task<bool>> m_connectAction;
-    private readonly int m_tryCount;
-    private readonly int m_sleepTime;
-    private readonly bool m_printLog;
-    private readonly Action<TClient>? m_successCallback;
-    private readonly Func<TClient, int, Exception, bool>? m_failCallback;
+    private readonly ReconnectionOption<TClient> m_options;
 
     /// <summary>
     /// 重连插件
     /// </summary>
     /// <param name="options">重连配置选项</param>
-    public ReconnectionPlugin(ReconnectionOptions<TClient> options)
+    public ReconnectionPlugin(ReconnectionOption<TClient> options)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(options, nameof(options));
-        // 接收所有配置成员到全局变量
-        this.m_pollingInterval = options.PollingInterval;
-        this.m_tryCount = options.TryCount;
-        this.m_sleepTime = options.SleepTime;
-        this.m_printLog = options.PrintLog;
-        this.m_successCallback = options.SuccessCallback;
-        this.m_failCallback = options.FailCallback;
-
-        // 初始化默认的检查动作
-        this.m_checkAction = options.CheckAction ?? ((c, count) =>
-        {
-            if (c.Online)
-            {
-                return Task.FromResult(ConnectionCheckResult.Alive);
-            }
-            else
-            {
-                return Task.FromResult(ConnectionCheckResult.Dead);
-            }
-        });
-
-        // 初始化默认的连接动作
-        this.m_connectAction = options.ConnectAction ?? this.BuildDefaultConnectAction();
+        this.m_options = ThrowHelper.ThrowArgumentNullExceptionIf(options, nameof(options));
     }
 
     /// <summary>
@@ -70,14 +41,19 @@ public class ReconnectionPlugin<TClient> : PluginBase, ILoadedConfigPlugin
     /// <summary>
     /// 轮询时间间隔
     /// </summary>
-    public TimeSpan PollingInterval => this.m_pollingInterval;
+    public TimeSpan PollingInterval => this.m_options.PollingInterval;
+
+    /// <summary>
+    /// 重连选项
+    /// </summary>
+    public ReconnectionOption<TClient> Options => this.m_options;
 
     /// <inheritdoc/>
     public async Task OnLoadedConfig(IConfigObject sender, ConfigEventArgs e)
     {
         if (sender is TClient client)
         {
-            _ = EasyTask.SafeRun(this.BeginReconnect, client);
+            _ = EasyTask.SafeRun(this.StartReconnectionLoop, client);
         }
 
         await e.InvokeNext().ConfigureAwait(EasyTask.ContinueOnCapturedContext);
@@ -94,111 +70,72 @@ public class ReconnectionPlugin<TClient> : PluginBase, ILoadedConfigPlugin
         base.Dispose(disposing);
     }
 
-    private Func<TClient, CancellationToken, Task<bool>> BuildDefaultConnectAction()
+    private async Task StartReconnectionLoop(TClient client)
     {
-        return async (client, cancellationToken) =>
+        // 初始延时，避免过快重连
+        await Task.Delay(1000, CancellationToken.None);
+
+        if (this.m_options.LogReconnection)
         {
-            var tryT = this.m_tryCount;
-            var tryCount = 0;
-
-            while (this.m_tryCount < 0 || tryT-- > 0)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return true;
-                }
-
-                try
-                {
-                    if (client.Online)
-                    {
-                        return true;
-                    }
-
-                    await Task.Delay(1000, cancellationToken).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
-                    await client.ConnectAsync(cancellationToken).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
-
-                    this.m_successCallback?.Invoke(client);
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    if (this.m_printLog)
-                    {
-                        client.Logger?.Exception(this, ex);
-                    }
-
-                    if (this.m_failCallback != null)
-                    {
-                        if (!this.m_failCallback.Invoke(client, ++tryCount, ex))
-                        {
-                            return true;
-                        }
-                    }
-
-                    await Task.Delay(this.m_sleepTime, cancellationToken).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
-                }
-            }
-
-            return true;
-        };
-    }
-
-    private async Task BeginReconnect(TClient client)
-    {
-        client.Logger?.Debug(this, TouchSocketResource.PollingBegin.Format(this.PollingInterval));
-
-        var failCount = 0;
+            client.Logger?.Debug(this, TouchSocketResource.PollingBegin.Format(this.PollingInterval));
+        }
 
         try
         {
-            while (true)
+            while (!this.DisposedValue && !this.m_cts.Token.IsCancellationRequested)
             {
-                if (this.DisposedValue)
-                {
-                    client.Logger?.Debug(this, TouchSocketResource.PollingWillEnd);
-                    return;
-                }
-
-                await Task.Delay(this.PollingInterval).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
+                await Task.Delay(this.PollingInterval, this.m_cts.Token).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
 
                 if (client.PauseReconnection)
                 {
-                    client.Logger?.Debug(this, TouchSocketResource.PauseReconnection);
+                    if (this.m_options.LogReconnection)
+                    {
+                        client.Logger?.Debug(this, TouchSocketResource.PauseReconnection);
+                    }
                     continue;
                 }
 
                 try
                 {
-                    var checkResult = await this.m_checkAction.Invoke(client, failCount).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
+                    var checkResult = await this.m_options.CheckAction.Invoke(client).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
+
                     switch (checkResult)
                     {
                         case ConnectionCheckResult.Skip:
                             continue;
                         case ConnectionCheckResult.Dead:
-                            if (await this.m_connectAction.Invoke(client, this.m_cts.Token).ConfigureAwait(EasyTask.ContinueOnCapturedContext))
-                            {
-                                failCount = 0;
-                            }
+                            await this.m_options.ConnectAction.Invoke(client, this.m_cts.Token).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
                             break;
                         case ConnectionCheckResult.Alive:
-                            failCount = 0;
                             break;
                     }
                 }
                 catch (Exception ex)
                 {
-                    client.Logger?.Exception(this, ex);
+                    if (this.m_options.LogReconnection)
+                    {
+                        client.Logger?.Exception(this, ex);
+                    }
                 }
             }
         }
+        catch (OperationCanceledException)
+        {
+            // 正常取消，不记录错误
+        }
         catch (Exception ex)
         {
-            client.Logger?.Exception(this, ex);
+            if (this.m_options.LogReconnection)
+            {
+                client.Logger?.Exception(this, ex);
+            }
         }
         finally
         {
-            client.Logger?.Debug(this, TouchSocketResource.PollingEnd);
+            if (this.m_options.LogReconnection)
+            {
+                client.Logger?.Debug(this, TouchSocketResource.PollingEnd);
+            }
         }
     }
 }

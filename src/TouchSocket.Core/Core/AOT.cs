@@ -10,33 +10,16 @@
 // 感谢您的下载和使用
 // ------------------------------------------------------------------------------
 
-namespace TouchSocket.WebApi;
+using System.Diagnostics.CodeAnalysis;
 
-/// <summary>
-/// WebApi配置选项。
-/// </summary>
-public class WebApiOption
+namespace TouchSocket.Core;
+
+public static class AOT
 {
-    /// <summary>
-    /// 初始化<see cref="WebApiOption"/>类的新实例。
-    /// </summary>
-    public WebApiOption()
-    {
-        this.Converter = new WebApiSerializerConverter();
-        this.Converter.AddJsonSerializerFormatter(new Newtonsoft.Json.JsonSerializerSettings());
-    }
+    public const DynamicallyAccessedMemberTypes SerializerFormatterMemberType = DynamicallyAccessedMemberTypes.All;
 
     /// <summary>
-    /// 获取WebApi序列化器转换器。
+    /// DynamicallyAccessed
     /// </summary>
-    public WebApiSerializerConverter Converter { get; }
-
-    /// <summary>
-    /// 配置序列化器转换器。
-    /// </summary>
-    /// <param name="action">配置操作</param>
-    public void ConfigureConverter(Action<WebApiSerializerConverter> action)
-    {
-        action.Invoke(this.Converter);
-    }
+    public const DynamicallyAccessedMemberTypes ContainerMemberType = DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.PublicProperties;
 }
