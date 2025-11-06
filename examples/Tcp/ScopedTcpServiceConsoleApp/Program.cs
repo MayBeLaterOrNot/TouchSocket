@@ -21,7 +21,8 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
-        var service = await CreateService();
+        var service1 = await CreateService_AspNetCoreContainer(8848);
+        var service2 = await CreateService_Container(8849);
 
         while (true)
         {
@@ -29,7 +30,7 @@ internal class Program
         }
     }
 
-    private static async Task<TcpService> CreateService()
+    private static async Task<TcpService> CreateService_AspNetCoreContainer(int port)
     {
         //创建IOC容器
         var iocServices = new ServiceCollection();
@@ -48,8 +49,30 @@ internal class Program
 
         var service = new TcpService();
         await service.SetupAsync(new TouchSocketConfig()//载入配置
-             .SetListenIPHosts("tcp://127.0.0.1:7789", 7790)//同时监听两个地址
+             .SetListenIPHosts(port)//同时监听两个地址
              .UseAspNetCoreContainer(iocServices)
+             .ConfigurePlugins(a =>
+             {
+                 a.Add<MyScopedPlugin>();
+             }));
+        await service.StartAsync();//启动
+        return service;
+    }
+
+    private static async Task<TcpService> CreateService_Container(int port)
+    {
+        var service = new TcpService();
+        await service.SetupAsync(new TouchSocketConfig()//载入配置
+             .SetListenIPHosts(port)//同时监听两个地址
+             .ConfigureContainer(a =>
+             {
+                 a.RegisterScoped<MyScopedPlugin>();
+                 a.AddLogger(logger =>
+                 {
+                     logger.AddConsoleLogger();
+                     logger.AddFileLogger();
+                 });
+             })
              .ConfigurePlugins(a =>
              {
                  a.Add<MyScopedPlugin>();
