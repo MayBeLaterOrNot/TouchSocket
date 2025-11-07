@@ -12,12 +12,14 @@
 
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace TouchSocket.Rpc;
 
 /// <summary>
 /// RpcDispatchProxy
 /// </summary>
+[RequiresUnreferencedCode("动态代理不支持AOT环境")]
 public abstract class RpcDispatchProxy<TClient, TAttribute> : DispatchProxy where TClient : IRpcClient where TAttribute : RpcAttribute
 {
     private readonly ConcurrentDictionary<MethodInfo, ProxyModel> m_methods = new ConcurrentDictionary<MethodInfo, ProxyModel>();
@@ -26,6 +28,7 @@ public abstract class RpcDispatchProxy<TClient, TAttribute> : DispatchProxy wher
     /// <summary>
     /// RpcDispatchProxy
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL3050:使用动态代码可能与修剪不兼容")]
     public RpcDispatchProxy()
     {
         this.m_fromResultMethod = typeof(Task).GetMethod("FromResult");
@@ -97,6 +100,7 @@ public abstract class RpcDispatchProxy<TClient, TAttribute> : DispatchProxy wher
     }
 
 
+    [UnconditionalSuppressMessage("Trimming", "IL3050:使用动态代码可能与修剪不兼容")]
     private ProxyModel AddMethod(MethodInfo info)
     {
         var attribute = info.GetCustomAttribute<TAttribute>(true) ?? throw new Exception($"在方法{info.Name}中没有找到{typeof(TAttribute)}的特性。");

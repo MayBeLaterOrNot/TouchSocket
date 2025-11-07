@@ -68,8 +68,8 @@ public sealed class JsonRpcActor : DisposableObject, IJsonRpcClient
     /// <param name="actionMap">动作映射。</param>
     public static void AddRpcToMap(IRpcServerProvider rpcServerProvider, ActionMap actionMap)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(rpcServerProvider, nameof(rpcServerProvider));
-        ThrowHelper.ThrowArgumentNullExceptionIf(actionMap, nameof(actionMap));
+        ThrowHelper.ThrowIfNull(rpcServerProvider, nameof(rpcServerProvider));
+        ThrowHelper.ThrowIfNull(actionMap, nameof(actionMap));
 
         foreach (var rpcMethod in rpcServerProvider.GetMethods())
         {
@@ -242,8 +242,8 @@ public sealed class JsonRpcActor : DisposableObject, IJsonRpcClient
     /// <param name="actionMap">动作映射。</param>
     public void SetRpcServerProvider(IRpcServerProvider rpcServerProvider, ActionMap actionMap)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(rpcServerProvider, nameof(rpcServerProvider));
-        ThrowHelper.ThrowArgumentNullExceptionIf(actionMap, nameof(actionMap));
+        ThrowHelper.ThrowIfNull(rpcServerProvider, nameof(rpcServerProvider));
+        ThrowHelper.ThrowIfNull(actionMap, nameof(actionMap));
         this.m_rpcServerProvider = rpcServerProvider;
         this.ActionMap = actionMap;
     }

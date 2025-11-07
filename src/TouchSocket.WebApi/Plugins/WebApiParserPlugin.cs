@@ -32,7 +32,7 @@ public sealed class WebApiParserPlugin : PluginBase, IHttpPlugin, ITcpClosedPlug
     /// </summary>
     public WebApiParserPlugin(IRpcServerProvider rpcServerProvider, WebApiOption option)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(rpcServerProvider, nameof(IRpcServerProvider));
+        ThrowHelper.ThrowIfNull(rpcServerProvider, nameof(IRpcServerProvider));
         this.RegisterServer(rpcServerProvider.GetMethods());
         this.m_rpcServerProvider = rpcServerProvider;
         this.Converter = option.Converter;

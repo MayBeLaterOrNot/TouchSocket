@@ -208,7 +208,7 @@ public abstract partial class NamedPipeClientBase : SetupConfigObject, INamedPip
             await this.WaitClearConnect().ConfigureAwait(EasyTask.ContinueOnCapturedContext);
 
             var pipeName = this.Config.GetValue(NamedPipeConfigExtension.PipeNameProperty);
-            ThrowHelper.ThrowArgumentNullExceptionIf(pipeName, nameof(pipeName));
+            ThrowHelper.ThrowIfNull(pipeName, nameof(pipeName));
 
             var serverName = this.Config.GetValue(NamedPipeConfigExtension.PipeServerNameProperty);
 

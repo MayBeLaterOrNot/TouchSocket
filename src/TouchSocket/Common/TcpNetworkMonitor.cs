@@ -28,8 +28,10 @@ public class TcpNetworkMonitor
     /// <exception cref="ArgumentNullException">如果option或socket为<see langword="null"/>，则抛出此异常</exception>
     public TcpNetworkMonitor(TcpListenOption option, Socket socket, SocketAsyncEventArgs e)
     {
-        this.Option = ThrowHelper.ThrowArgumentNullExceptionIf(option, nameof(option));
-        this.Socket = ThrowHelper.ThrowArgumentNullExceptionIf(socket, nameof(socket));
+        ThrowHelper.ThrowIfNull(option, nameof(option));
+        ThrowHelper.ThrowIfNull(socket, nameof(socket));
+        this.Option = option;
+        this.Socket = socket;
         this.SocketAsyncEvent = e;
     }
 

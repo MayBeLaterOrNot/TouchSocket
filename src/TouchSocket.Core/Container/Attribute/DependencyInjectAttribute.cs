@@ -13,17 +13,10 @@
 namespace TouchSocket.Core;
 
 /// <summary>
-/// 映射配置
+/// 指定依赖类型。
 /// </summary>
-public class MapperOption
+[AttributeUsage(AttributeTargets.Constructor)]
+public sealed class DependencyInjectAttribute : Attribute
 {
-    /// <summary>
-    /// 需要忽略的属性名称
-    /// </summary>
-    public List<string> IgnoreProperties { get; set; }
 
-    /// <summary>
-    /// 映射属性名称
-    /// </summary>
-    public Dictionary<string, string> MapperProperties { get; set; }
 }

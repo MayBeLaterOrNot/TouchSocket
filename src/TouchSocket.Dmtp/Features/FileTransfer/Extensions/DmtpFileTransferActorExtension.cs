@@ -49,7 +49,7 @@ public static class DmtpFileTransferActorExtension
     public static IDmtpFileTransferActor GetDmtpFileTransferActor(this IDmtpActorObject client)
     {
         var actor = client.DmtpActor.GetDmtpFileTransferActor();
-        ThrowHelper.ThrowArgumentNullExceptionIf(actor, nameof(actor), TouchSocketDmtpResource.DmtpFileTransferActorNull);
+        ThrowHelper.ThrowIfNull(actor, nameof(actor), TouchSocketDmtpResource.DmtpFileTransferActorNull);
         return actor;
     }
 

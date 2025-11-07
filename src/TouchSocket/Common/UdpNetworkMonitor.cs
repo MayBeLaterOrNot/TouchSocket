@@ -28,8 +28,8 @@ public class UdpNetworkMonitor
     public UdpNetworkMonitor(IPHost iPHost, Socket socket)
     {
         this.IPHost = iPHost;
-        // 检查socket参数是否为空，为空则抛出ArgumentNullException
-        this.Socket = ThrowHelper.ThrowArgumentNullExceptionIf(socket, nameof(socket));
+        ThrowHelper.ThrowIfNull(socket, nameof(socket));
+        this.Socket = socket;
     }
 
     /// <summary>

@@ -49,10 +49,10 @@ public abstract class TcpServiceBase<TClient> : ConnectableService<TClient>, ITc
     /// <inheritdoc/>
     public void AddListen(TcpListenOption option)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(option, nameof(option));
+        ThrowHelper.ThrowIfNull(option, nameof(option));
         this.ThrowIfDisposed();
 
-        ThrowHelper.ThrowArgumentNullExceptionIf(option.IpHost, nameof(option.IpHost));
+        ThrowHelper.ThrowIfNull(option.IpHost, nameof(option.IpHost));
 
         var socket = new Socket(option.IpHost.EndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
@@ -106,7 +106,7 @@ public abstract class TcpServiceBase<TClient> : ConnectableService<TClient>, ITc
     /// <inheritdoc/>
     public bool RemoveListen(TcpNetworkMonitor monitor)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(monitor, nameof(monitor));
+        ThrowHelper.ThrowIfNull(monitor, nameof(monitor));
 
         if (this.m_monitors.Remove(monitor))
         {

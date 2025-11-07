@@ -34,7 +34,7 @@ public class FileResourceInfo : PackageBase
         }
 
         // 使用FileInfo对象创建RemoteFileInfo对象，并用其初始化FileResourceInfo对象
-        this.PrivateCreate(fileInfo.Map<RemoteFileInfo>(), fileSectionSize);
+        this.PrivateCreate(Mapper.Trans<FileInfo, RemoteFileInfo>(fileInfo), fileSectionSize);
     }
 
     /// <summary>

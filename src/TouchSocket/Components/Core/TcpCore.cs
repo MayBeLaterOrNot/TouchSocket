@@ -63,7 +63,7 @@ internal sealed class TcpCore : SafetyDisposableObject
     /// <param name="socket"></param>
     public void Reset(Socket socket)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(socket, nameof(socket));
+        ThrowHelper.ThrowIfNull(socket, nameof(socket));
 
         if (!socket.Connected)
         {

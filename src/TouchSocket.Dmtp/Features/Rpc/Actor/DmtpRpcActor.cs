@@ -11,6 +11,7 @@
 //------------------------------------------------------------------------------
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using TouchSocket.Resources;
 using TouchSocket.Rpc;
 
@@ -449,7 +450,7 @@ public class DmtpRpcActor : DisposableObject, IDmtpRpcActor
     }
 
     /// <inheritdoc/>
-    public async Task<object> InvokeAsync(string targetId, string invokeKey, Type returnType, InvokeOption invokeOption, params object[] parameters)
+    public async Task<object> InvokeAsync(string targetId, string invokeKey, [DynamicallyAccessedMembers(AOT.RpcInvoke)] Type returnType, InvokeOption invokeOption, params object[] parameters)
     {
         if (string.IsNullOrEmpty(targetId))
         {

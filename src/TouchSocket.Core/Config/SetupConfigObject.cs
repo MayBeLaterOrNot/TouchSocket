@@ -75,7 +75,7 @@ public abstract class SetupConfigObject : ResolverConfigObject, ISetupConfigObje
             }
             if (!registrator.IsRegistered(typeof(ILog)))
             {
-                registrator.RegisterSingleton<ILog>(new LoggerGroup());
+                registrator.RegisterSingleton<ILog, LoggerGroup>(new LoggerGroup());
             }
 
             if (this.m_config.GetValue(TouchSocketCoreConfigExtension.ConfigureContainerProperty) is Action<IRegistrator> actionContainer)

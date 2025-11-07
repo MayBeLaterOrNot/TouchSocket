@@ -94,7 +94,7 @@ public abstract class UdpSessionBase : ServiceBase, IUdpSessionBase
     {
         this.ThrowIfDisposed();
 
-        ThrowHelper.ThrowArgumentNullExceptionIf(multicastAddr, nameof(multicastAddr));
+        ThrowHelper.ThrowIfNull(multicastAddr, nameof(multicastAddr));
 
         // 根据Socket的地址族类型，执行相应的退出组播组操作
         if (this.m_monitor.Socket.AddressFamily == AddressFamily.InterNetwork)
@@ -122,7 +122,7 @@ public abstract class UdpSessionBase : ServiceBase, IUdpSessionBase
     {
         this.ThrowIfDisposed();
 
-        ThrowHelper.ThrowArgumentNullExceptionIf(multicastAddr, nameof(multicastAddr));
+        ThrowHelper.ThrowIfNull(multicastAddr, nameof(multicastAddr));
 
         // 根据不同的地址族设置组播成员资格
         if (this.m_monitor.Socket.AddressFamily == AddressFamily.InterNetwork)
@@ -453,7 +453,7 @@ public abstract class UdpSessionBase : ServiceBase, IUdpSessionBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ThrowIfRemoteIPHostNull()
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(this.RemoteIPHost, nameof(this.RemoteIPHost));
+        ThrowHelper.ThrowIfNull(this.RemoteIPHost, nameof(this.RemoteIPHost));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

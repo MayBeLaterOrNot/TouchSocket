@@ -91,7 +91,7 @@ public partial class HttpDmtpClient : HttpClientBase, IHttpDmtpClient
             }
 
             var dmtpOption = this.Config.GetValue(DmtpConfigExtension.DmtpOptionProperty);
-            ThrowHelper.ThrowArgumentNullExceptionIf(dmtpOption, nameof(dmtpOption));
+            ThrowHelper.ThrowIfNull(dmtpOption, nameof(dmtpOption));
 
             // 与Dmtp服务器进行握手操作，完成连接
             await this.m_dmtpActor.ConnectAsync(dmtpOption, cancellationToken).ConfigureAwait(EasyTask.ContinueOnCapturedContext);

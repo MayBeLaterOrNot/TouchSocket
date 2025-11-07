@@ -108,7 +108,7 @@ public class MqttTcpClient : TcpClientBase, IMqttTcpClient
         }
 
         var mqttConnectOptions = this.Config.GetValue(MqttConfigExtension.MqttConnectOptionsProperty);
-        ThrowHelper.ThrowArgumentNullExceptionIf(mqttConnectOptions, nameof(mqttConnectOptions));
+        ThrowHelper.ThrowIfNull(mqttConnectOptions, nameof(mqttConnectOptions));
 
         var connectMessage = new MqttConnectMessage(mqttConnectOptions);
 

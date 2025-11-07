@@ -49,7 +49,7 @@ public abstract class NamedPipeServiceBase<TClient> : ConnectableService<TClient
     public void AddListen(NamedPipeListenOption option)
     {
         this.ThrowIfDisposed();
-        ThrowHelper.ThrowArgumentNullExceptionIf(option, nameof(option));
+        ThrowHelper.ThrowIfNull(option, nameof(option));
         ThrowHelper.ThrowArgumentNullExceptionIfStringIsNullOrEmpty(option.PipeName, nameof(option.PipeName));
         
 
@@ -88,7 +88,7 @@ public abstract class NamedPipeServiceBase<TClient> : ConnectableService<TClient
     public bool RemoveListen(NamedPipeMonitor monitor)
     {
         this.ThrowIfDisposed();
-        ThrowHelper.ThrowArgumentNullExceptionIf(monitor, nameof(monitor));
+        ThrowHelper.ThrowIfNull(monitor, nameof(monitor));
 
         if (this.m_monitors.Remove(monitor))
         {

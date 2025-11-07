@@ -10,6 +10,7 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace TouchSocket.Rpc;
@@ -532,6 +533,7 @@ public abstract class RpcAttribute : Attribute
         }
     }
 
+    [RequiresUnreferencedCode("此方法使用反射动态加载程序集，与剪裁不兼容。请改用安全的替代方法。")]
     internal void SetClassCodeGenerator(ClassCodeGenerator classCodeGenerator)
     {
         this.ClassCodeGenerator = classCodeGenerator;
@@ -774,6 +776,7 @@ public abstract class RpcAttribute : Attribute
         return codeString.ToString();
     }
 
+    [RequiresUnreferencedCode("此方法使用反射动态加载程序集，与剪裁不兼容。请改用安全的替代方法。")]
     private Dictionary<string, object> GetPublicPropertiesAsDictionary()
     {
         var propertiesDict = new Dictionary<string, object>();

@@ -25,7 +25,7 @@ public sealed partial class MqttUnsubscribeMessage : MqttIdentifierMessage
     /// <param name="topics">要取消订阅的主题。</param>
     public MqttUnsubscribeMessage(params string[] topics)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(topics, nameof(topics));
+        ThrowHelper.ThrowIfNull(topics, nameof(topics));
 
         if (topics.Length < 1)
         {

@@ -10,6 +10,8 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace TouchSocket.Core;
 
 /// <summary>
@@ -21,13 +23,14 @@ public class DependencyDescriptor
     /// 初始化一个单例实例。
     /// </summary>
     /// <param name="fromType">要从该类型创建实例的类型。</param>
+    /// <param name="toType">服务在容器中实际使用的类型</param>
     /// <param name="instance">创建的单例实例。</param>
-    public DependencyDescriptor(Type fromType, object instance)
+    public DependencyDescriptor(Type fromType, [DynamicallyAccessedMembers(AOT.Container)] Type toType, object instance)
     {
-        this.FromType = fromType; // 设置从哪个类型创建实例
-        this.ToInstance = instance; // 设置要创建的实例
-        this.Lifetime = Lifetime.Singleton; // 设置实例的生命周期为单例
-        this.ToType = instance.GetType(); // 设置实例的类型
+        this.FromType = fromType;
+        this.ToInstance = instance;
+        this.Lifetime = Lifetime.Singleton;
+        this.ToType = toType;
     }
 
     /// <summary>
@@ -36,7 +39,7 @@ public class DependencyDescriptor
     /// <param name="fromType">要注册的服务的类型</param>
     /// <param name="toType">服务在容器中实际使用的类型</param>
     /// <param name="lifetime">服务的生命周期</param>
-    public DependencyDescriptor(Type fromType, Type toType, Lifetime lifetime)
+    public DependencyDescriptor(Type fromType, [DynamicallyAccessedMembers(AOT.Container)] Type toType, Lifetime lifetime)
     {
         this.FromType = fromType;
         this.Lifetime = lifetime;
@@ -46,10 +49,13 @@ public class DependencyDescriptor
     /// <summary>
     /// 初始化一个简单的服务描述
     /// </summary>
-    /// <param name="fromType">指定服务的类型</param>
-    public DependencyDescriptor(Type fromType)
+    /// <param name="type">指定服务的类型</param>
+    /// <param name="lifetime">生命周期，默认为瞬态</param>
+    public DependencyDescriptor([DynamicallyAccessedMembers(AOT.Container)] Type type, Lifetime lifetime = Lifetime.Transient)
     {
-        this.FromType = fromType;
+        this.FromType = type;
+        this.Lifetime = lifetime;
+        this.ToType = type;
     }
 
     /// <summary>
@@ -83,5 +89,6 @@ public class DependencyDescriptor
     /// <summary>
     /// 实例类型
     /// </summary>
+    [DynamicallyAccessedMembers(AOT.Container)]
     public Type ToType { get; }
 }

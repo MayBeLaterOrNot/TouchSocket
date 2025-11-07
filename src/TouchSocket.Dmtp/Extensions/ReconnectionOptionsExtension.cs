@@ -48,12 +48,7 @@ public static class ReconnectionOptionsExtension
         TimeSpan? pingTimeout = null)
   where TClient : IConnectableClient, IOnlineClient, IDependencyClient, IDmtpClient
     {
-        // 参数验证
-        if (reconnectionOption is null)
-        {
-            throw new ArgumentNullException(nameof(reconnectionOption));
-        }
-
+        ThrowHelper.ThrowIfNull(reconnectionOption, nameof(reconnectionOption));
         var span = activeTimeSpan ?? TimeSpan.FromSeconds(3);
         var timeout = pingTimeout ?? TimeSpan.FromSeconds(5);
 

@@ -10,6 +10,8 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace TouchSocket.Dmtp;
 
 /// <summary>
@@ -31,7 +33,7 @@ public static class DmtpRouteServiceExtension
     /// </summary>
     /// <typeparam name="TDmtpRouteService">DMTP路由服务的具体类型。</typeparam>
     /// <param name="registrator">服务注册器接口，用于在服务容器中注册服务。</param>
-    public static void AddDmtpRouteService<TDmtpRouteService>(this IRegistrator registrator)
+    public static void AddDmtpRouteService<[DynamicallyAccessedMembers(AOT.Container)] TDmtpRouteService>(this IRegistrator registrator)
         where TDmtpRouteService : class, IDmtpRouteService
     {
         // 使用单例模式注册DMTP路由服务，确保在整个应用生命周期中只创建一个实例。
@@ -45,7 +47,7 @@ public static class DmtpRouteServiceExtension
     /// <param name="func"></param>
     public static void AddDmtpRouteService(this IRegistrator registrator, Func<string, Task<IDmtpActor>> func)
     {
-        registrator.RegisterSingleton<IDmtpRouteService>(new DmtpRouteService()
+        registrator.RegisterSingleton<IDmtpRouteService, DmtpRouteService>(new DmtpRouteService()
         {
             FindDmtpActor = func
         });

@@ -10,6 +10,7 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace TouchSocket.Rpc;
@@ -58,6 +59,7 @@ public static class CodeGenerator
     /// </summary>
     /// <param name="type"></param>
     /// <param name="deepSearch"></param>
+    [RequiresUnreferencedCode("此方法使用反射动态加载程序集，与剪裁不兼容。请改用安全的替代方法。")]
     public static void AddProxyType(Type type, bool deepSearch = true)
     {
         if (type.IsPrimitive || type == typeof(string))
@@ -84,6 +86,7 @@ public static class CodeGenerator
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="deepSearch"></param>
+    [RequiresUnreferencedCode("此方法使用反射动态加载程序集，与剪裁不兼容。请改用安全的替代方法。")]
     public static void AddProxyType<T>(bool deepSearch = true)
     {
         AddProxyType(typeof(T), deepSearch);
@@ -245,6 +248,7 @@ public static class CodeGenerator
     /// <typeparam name="TServer">服务类型</typeparam>
     /// <typeparam name="TAttribute">属性标签</typeparam>
     /// <returns></returns>
+    [RequiresUnreferencedCode("此方法使用反射动态加载程序集，与剪裁不兼容。请改用安全的替代方法。")]
     public static ServerCellCode Generator<TServer, TAttribute>() where TServer : IRpcServer where TAttribute : RpcAttribute
     {
         return Generator(typeof(TServer), typeof(TAttribute));
@@ -256,6 +260,7 @@ public static class CodeGenerator
     /// <param name="serverType">服务类型</param>
     /// <param name="attributeType"></param>
     /// <returns></returns>
+    [RequiresUnreferencedCode("此方法使用反射动态加载程序集，与剪裁不兼容。请改用安全的替代方法。")]
     public static ServerCellCode Generator(Type serverType, Type attributeType)
     {
         var serverCellCode = new ServerCellCode();
@@ -391,7 +396,7 @@ public static class CodeGenerator
     /// </summary>
     /// <param name="type"></param>
     /// <param name="methods"></param>
-    public static void GetMethodInfos(Type type, ref Dictionary<string, MethodInfo> methods)
+    public static void GetMethodInfos([DynamicallyAccessedMembers(AOT.RpcRegister)] Type type, ref Dictionary<string, MethodInfo> methods)
     {
         foreach (var item in type.GetInterfaces())
         {
@@ -424,7 +429,7 @@ public static class CodeGenerator
     /// <param name="serverToType">目标服务类型。</param>
     /// <returns>映射到目标类型的方法信息。</returns>
     /// <exception cref="RpcException">如果未找到映射方法，则抛出异常。</exception>
-    public static MethodInfo GetToMethodInfo(MethodInfo method, Type serverFromType, Type serverToType)
+    public static MethodInfo GetToMethodInfo(MethodInfo method, [DynamicallyAccessedMembers(AOT.RpcRegister)] Type serverFromType, [DynamicallyAccessedMembers(AOT.RpcRegister)] Type serverToType)
     {
         if (serverFromType == serverToType)
         {
@@ -448,6 +453,7 @@ public static class CodeGenerator
     /// </summary>
     /// <typeparam name="TServer"></typeparam>
     /// <returns></returns>
+    [RequiresUnreferencedCode("此方法使用反射动态加载程序集，与剪裁不兼容。请改用安全的替代方法。")]
     public static RpcMethod[] GetRpcMethods<TServer>() where TServer : IRpcServer
     {
         return GetRpcMethods(typeof(TServer), typeof(TServer));
@@ -459,7 +465,8 @@ public static class CodeGenerator
     /// <param name="serverFromType"></param>
     /// <param name="serverToType"></param>
     /// <returns></returns>
-    public static RpcMethod[] GetRpcMethods(Type serverFromType, Type serverToType)
+
+    public static RpcMethod[] GetRpcMethods([DynamicallyAccessedMembers(AOT.RpcRegister)] Type serverFromType, [DynamicallyAccessedMembers(AOT.RpcRegister)] Type serverToType)
     {
         if (!typeof(IRpcServer).IsAssignableFrom(serverFromType))
         {
@@ -499,6 +506,7 @@ public static class CodeGenerator
     /// <param name="serverTypes"></param>
     /// <param name="attributeTypes"></param>
     /// <returns></returns>
+    [RequiresUnreferencedCode("此方法使用反射动态加载程序集，与剪裁不兼容。请改用安全的替代方法。")]
     public static string GetProxyCodes(string @namespace, Type[] serverTypes, Type[] attributeTypes)
     {
         var serverCellCodeList = new List<ServerCellCode>();

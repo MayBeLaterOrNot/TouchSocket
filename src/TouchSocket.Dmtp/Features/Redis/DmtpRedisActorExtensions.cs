@@ -28,7 +28,7 @@ public static class DmtpRedisActorExtensions
     public static IDmtpRedisActor GetDmtpRedisActor(this IDmtpActorObject client)
     {
         var actor = client.DmtpActor.GetDmtpRedisActor();
-        ThrowHelper.ThrowArgumentNullExceptionIf(actor, nameof(actor), TouchSocketDmtpResource.RedisActorNull);
+        ThrowHelper.ThrowIfNull(actor, nameof(actor), TouchSocketDmtpResource.RedisActorNull);
         return actor;
     }
 

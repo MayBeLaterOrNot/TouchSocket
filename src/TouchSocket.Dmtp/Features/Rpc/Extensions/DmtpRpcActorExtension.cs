@@ -64,7 +64,7 @@ public static class DmtpRpcActorExtension
     public static IDmtpRpcActor GetDmtpRpcActor(this IDmtpActorObject client)
     {
         var actor = client.DmtpActor.GetDmtpRpcActor();
-        ThrowHelper.ThrowArgumentNullExceptionIf(actor, nameof(actor), TouchSocketDmtpResource.DmtpRpcActorArgumentNull);
+        ThrowHelper.ThrowIfNull(actor, nameof(actor), TouchSocketDmtpResource.DmtpRpcActorArgumentNull);
         return actor;
     }
 
@@ -77,7 +77,7 @@ public static class DmtpRpcActorExtension
     public static TDmtpRpcActor GetDmtpRpcActor<TDmtpRpcActor>(this IDmtpActorObject client) where TDmtpRpcActor : IDmtpRpcActor
     {
         var actor = client.DmtpActor.GetDmtpRpcActor();
-        ThrowHelper.ThrowArgumentNullExceptionIf(actor, nameof(actor), TouchSocketDmtpResource.DmtpRpcActorArgumentNull);
+        ThrowHelper.ThrowIfNull(actor, nameof(actor), TouchSocketDmtpResource.DmtpRpcActorArgumentNull);
         return (TDmtpRpcActor)actor;
     }
 }

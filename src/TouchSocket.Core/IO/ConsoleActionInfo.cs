@@ -13,23 +13,26 @@
 namespace TouchSocket.Core;
 
 /// <summary>
-/// 一个成员访问接口
+/// 控制台行为
 /// </summary>
-public interface IMemberAccessor
+
+public readonly struct ConsoleActionInfo
 {
     /// <summary>
-    /// 获取指定成员的值
+    /// 构造函数
     /// </summary>
-    /// <param name="instance"></param>
-    /// <param name="memberName"></param>
-    /// <returns></returns>
-    object GetValue(object instance, string memberName);
+    /// <param name="action"></param>
+    /// <param name="description"></param>
+    /// <param name="fullOrder"></param>
+    public ConsoleActionInfo(string description, string fullOrder, Func<Task> action)
+    {
+        this.FullOrder = fullOrder;
+        this.Action = action ?? throw new ArgumentNullException(nameof(action));
+        this.Description = description ?? throw new ArgumentNullException(nameof(description));
+    }
 
-    /// <summary>
-    ///设置指定成员的值
-    /// </summary>
-    /// <param name="instance"></param>
-    /// <param name="memberName"></param>
-    /// <param name="newValue"></param>
-    void SetValue(object instance, string memberName, object newValue);
+    public Func<Task> Action { get; }
+
+    public string Description { get; }
+    public string FullOrder { get; }
 }

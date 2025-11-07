@@ -26,11 +26,6 @@ namespace TouchSocket.Core;
 /// </remarks>
 public static class FastBinaryFormatter
 {
-    /// <summary>
-    /// 动态访问成员类型的常量，指定序列化时需要访问的成员类型。
-    /// </summary>
-    /// <value>包含公共构造函数、方法、字段和属性的<see cref="DynamicallyAccessedMemberTypes"/>组合。</value>
-    public const DynamicallyAccessedMemberTypes DynamicallyAccessed = DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties;
     private static readonly DefaultFastSerializerContext s_defaultFastSerializerContext = new DefaultFastSerializerContext();
 
     /// <summary>
@@ -52,7 +47,7 @@ public static class FastBinaryFormatter
     /// <remarks>
     /// 转换器必须有公共无参构造函数。注册后，该类型的所有实例都将使用指定的转换器进行序列化。
     /// </remarks>
-    public static void AddFastBinaryConverter<[DynamicallyAccessedMembers(DynamicallyAccessed)] TType, [DynamicallyAccessedMembers(DynamicallyAccessed)] TConverter>() where TConverter : IFastBinaryConverter, new()
+    public static void AddFastBinaryConverter<[DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] TType, [DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] TConverter>() where TConverter : IFastBinaryConverter, new()
     {
         AddFastBinaryConverter(typeof(TType), (IFastBinaryConverter)Activator.CreateInstance(typeof(TConverter)));
     }
@@ -65,7 +60,7 @@ public static class FastBinaryFormatter
     /// <remarks>
     /// 注册后，该类型的所有实例都将使用指定的转换器进行序列化。
     /// </remarks>
-    public static void AddFastBinaryConverter<[DynamicallyAccessedMembers(DynamicallyAccessed)] TType>(IFastBinaryConverter converter)
+    public static void AddFastBinaryConverter<[DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] TType>(IFastBinaryConverter converter)
     {
         AddFastBinaryConverter(typeof(TType), converter);
     }
@@ -78,7 +73,7 @@ public static class FastBinaryFormatter
     /// <remarks>
     /// 注册后，该类型的所有实例都将使用指定的转换器进行序列化。
     /// </remarks>
-    public static void AddFastBinaryConverter([DynamicallyAccessedMembers(DynamicallyAccessed)] Type type, IFastBinaryConverter converter)
+    public static void AddFastBinaryConverter([DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] Type type, IFastBinaryConverter converter)
     {
         s_defaultFastSerializerContext.AddFastBinaryConverter(type, converter);
     }
@@ -97,7 +92,8 @@ public static class FastBinaryFormatter
     /// <remarks>
     /// 此方法会在序列化数据前写入魔数（协议头），用于反序列化时的校验。
     /// </remarks>
-    public static void Serialize<[DynamicallyAccessedMembers(DynamicallyAccessed)] T>(ByteBlock byteBlock, in T graph, FastSerializerContext serializerContext = null)
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
+    public static void Serialize<[DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] T>(ByteBlock byteBlock, in T graph, FastSerializerContext serializerContext = null)
     {
         Serialize(ref byteBlock, graph, serializerContext);
     }
@@ -113,7 +109,8 @@ public static class FastBinaryFormatter
     /// <remarks>
     /// 此方法会在序列化数据前写入魔数（值为1的字节），用于反序列化时的快速校验。
     /// </remarks>
-    public static void Serialize<TWriter, [DynamicallyAccessedMembers(DynamicallyAccessed)] T>(ref TWriter writer, in T graph, FastSerializerContext serializerContext = null)
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
+    public static void Serialize<TWriter, [DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] T>(ref TWriter writer, in T graph, FastSerializerContext serializerContext = null)
         where TWriter : IBytesWriter
     {
         serializerContext ??= s_defaultFastSerializerContext;
@@ -133,7 +130,8 @@ public static class FastBinaryFormatter
     /// <remarks>
     /// 此方法内部使用64KB的<see cref="ValueByteBlock"/>进行序列化，完成后返回数据副本。
     /// </remarks>
-    public static byte[] SerializeToBytes<[DynamicallyAccessedMembers(DynamicallyAccessed)] T>(in T graph, FastSerializerContext serializerContext = null)
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
+    public static byte[] SerializeToBytes<[DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] T>(in T graph, FastSerializerContext serializerContext = null)
     {
         var byteBlock = new ValueByteBlock(1024 * 64);
         try
@@ -147,6 +145,7 @@ public static class FastBinaryFormatter
         }
     }
 
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
     private static void SerializeIListOrArray<TWriter>(ref TWriter writer, in IEnumerable param, FastSerializerContext serializerContext)
         where TWriter : IBytesWriter
     {
@@ -161,6 +160,7 @@ public static class FastBinaryFormatter
         span.WriteValue<uint>(paramLen);
     }
 
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
     private static void SerializeMutilDimensionalArray<TWriter>(ref TWriter writer, Array array, FastSerializerContext serializerContext)
         where TWriter : IBytesWriter
     {
@@ -178,7 +178,8 @@ public static class FastBinaryFormatter
     /// <summary>
     /// 序列化对象（包含复杂类型递归）
     /// </summary>
-    private static void SerializeObject<TWriter, T>(ref TWriter writer, T graph, FastSerializerContext serializerContext)
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
+    private static void SerializeObject<TWriter, [DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] T>(ref TWriter writer, T graph, FastSerializerContext serializerContext)
         where TWriter : IBytesWriter
     {
         // 基础+枚举+null 处理
@@ -301,7 +302,8 @@ public static class FastBinaryFormatter
     /// <remarks>
     /// 此方法会先校验魔数（协议头），确保数据格式正确。
     /// </remarks>
-    public static T Deserialize<[DynamicallyAccessedMembers(DynamicallyAccessed)] T>(ByteBlock byteBlock, FastSerializerContext serializerContext = null)
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
+    public static T Deserialize<[DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] T>(ByteBlock byteBlock, FastSerializerContext serializerContext = null)
     {
         return Deserialize<ByteBlock, T>(ref byteBlock, serializerContext);
     }
@@ -317,7 +319,8 @@ public static class FastBinaryFormatter
     /// <remarks>
     /// 此方法会先校验魔数（协议头），确保数据格式正确。
     /// </remarks>
-    public static T Deserialize<[DynamicallyAccessedMembers(DynamicallyAccessed)] T>(ref ValueByteBlock byteBlock, FastSerializerContext serializerContext = null)
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
+    public static T Deserialize<[DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] T>(ref ValueByteBlock byteBlock, FastSerializerContext serializerContext = null)
     {
         return Deserialize<ValueByteBlock, T>(ref byteBlock, serializerContext);
     }
@@ -333,7 +336,8 @@ public static class FastBinaryFormatter
     /// <remarks>
     /// 此方法内部创建<see cref="ValueByteBlock"/>包装字节数组，然后进行反序列化。
     /// </remarks>
-    public static T Deserialize<[DynamicallyAccessedMembers(DynamicallyAccessed)] T>(byte[] bytes, FastSerializerContext serializerContext = null)
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
+    public static T Deserialize<[DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] T>(byte[] bytes, FastSerializerContext serializerContext = null)
     {
         var byteBlock = new ValueByteBlock(bytes);
         return Deserialize<ValueByteBlock, T>(ref byteBlock, serializerContext);
@@ -351,7 +355,8 @@ public static class FastBinaryFormatter
     /// <remarks>
     /// 此方法会先校验魔数（协议头），确保数据格式正确。
     /// </remarks>
-    public static T Deserialize<TReader, [DynamicallyAccessedMembers(DynamicallyAccessed)] T>(ref TReader reader, FastSerializerContext serializerContext = null)
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
+    public static T Deserialize<TReader, [DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] T>(ref TReader reader, FastSerializerContext serializerContext = null)
         where TReader : IBytesReader
     {
         return (T)Deserialize(ref reader, typeof(T), serializerContext);
@@ -369,7 +374,8 @@ public static class FastBinaryFormatter
     /// <remarks>
     /// 此方法会先校验魔数（协议头），确保数据格式正确。魔数必须为1，否则抛出异常。
     /// </remarks>
-    public static object Deserialize<TReader>(ref TReader reader, [DynamicallyAccessedMembers(DynamicallyAccessed)] Type type, FastSerializerContext serializerContext = null)
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
+    public static object Deserialize<TReader>(ref TReader reader, [DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] Type type, FastSerializerContext serializerContext = null)
         where TReader : IBytesReader
     {
         if (ReaderExtension.ReadValue<TReader, byte>(ref reader) != 1)
@@ -381,7 +387,8 @@ public static class FastBinaryFormatter
         return Deserialize(type, ref reader, serializerContext);
     }
 
-    private static object Deserialize<TReader>([DynamicallyAccessedMembers(DynamicallyAccessed)] Type type, ref TReader reader, FastSerializerContext serializerContext)
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
+    private static object Deserialize<TReader>([DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] Type type, ref TReader reader, FastSerializerContext serializerContext)
             where TReader : IBytesReader
     {
         var nullable = type.IsNullableType(out var actualType);
@@ -406,7 +413,9 @@ public static class FastBinaryFormatter
         return DeserializeClass(type, serializeObj, ref reader, len, serializerContext);
     }
 
-    private static object DeserializeClass<TReader>([DynamicallyAccessedMembers(DynamicallyAccessed)] Type type, SerializObject serializeObject, ref TReader reader, int length, FastSerializerContext serializerContext)
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "数组元素类型已通过DynamicallyAccessedMembers标记保证存在")]
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
+    private static object DeserializeClass<TReader>([DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] Type type, SerializObject serializeObject, ref TReader reader, int length, FastSerializerContext serializerContext)
             where TReader : IBytesReader
     {
         object instance;
@@ -538,6 +547,7 @@ public static class FastBinaryFormatter
         return instance;
     }
 
+    [RequiresUnreferencedCode("此方法可能会使用反射构建访问器，与剪裁不兼容。如果已使用源生成上下文，可以忽略此警告。")]
     private static void FillArrayRecursive<TReader>(SerializObject serializObject, ref TReader reader, FastSerializerContext serializerContext, Array array, int[] rankArray, int[] indices, int dimension)
             where TReader : IBytesReader
     {
@@ -584,7 +594,7 @@ public static class FastBinaryFormatter
     /// <summary>
     /// 读取基础类型（含 null、枚举、原生数值等）。返回 true 表示已完成，外层无需再处理。
     /// </summary>
-    private static bool TryReadBasic<TReader>(Type type, bool nullable, ref TReader reader, out object value) where TReader : IBytesReader
+    private static bool TryReadBasic<TReader>([DynamicallyAccessedMembers(AOT.FastBinaryFormatter)] Type type, bool nullable, ref TReader reader, out object value) where TReader : IBytesReader
     {
         // Null 标记
         if (ReaderExtension.ReadIsNull(ref reader))

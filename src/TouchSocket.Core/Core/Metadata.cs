@@ -27,12 +27,12 @@ public sealed class Metadata : Dictionary<string, string>, IPackage
     {
         get
         {
-            ThrowHelper.ThrowArgumentNullExceptionIf(key, nameof(key));
+            ThrowHelper.ThrowIfNull(key, nameof(key));
             return this.TryGetValue(key, out var value) ? value : null;
         }
         set
         {
-            ThrowHelper.ThrowArgumentNullExceptionIf(key, nameof(key));
+            ThrowHelper.ThrowIfNull(key, nameof(key));
             base[key] = value;
         }
     }

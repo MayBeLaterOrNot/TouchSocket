@@ -31,8 +31,9 @@ public class Method
     /// <param name="dynamicMethodInfo">与该方法相关联的动态方法信息。不可能 <see langword="null"/>.</param>
     public Method(MethodInfo method, IDynamicMethodInfo dynamicMethodInfo)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(dynamicMethodInfo, nameof(dynamicMethodInfo));
-        this.m_info = ThrowHelper.ThrowArgumentNullExceptionIf(method, nameof(method));
+        ThrowHelper.ThrowIfNull(dynamicMethodInfo, nameof(dynamicMethodInfo));
+        ThrowHelper.ThrowIfNull(method, nameof(method));
+        this.m_info = method;
         this.m_dynamicMethodInfo = dynamicMethodInfo;
     }
 
@@ -40,53 +41,26 @@ public class Method
     /// 构造方法，初始化 Method 实例。
     /// </summary>
     /// <param name="method">目标方法信息。</param>
-    /// <param name="dynamicBuilderType">指定动态构建类型。</param>
-    public Method(MethodInfo method, DynamicBuilderType? dynamicBuilderType = default)
+    [UnconditionalSuppressMessage("AOT", "IL2026", Justification = "Method方法在AOT确定")]
+    public Method(MethodInfo method)
     {
-        this.m_info = ThrowHelper.ThrowArgumentNullExceptionIf(method, nameof(method));
-
-        if (dynamicBuilderType.HasValue)
-        {
-            switch (dynamicBuilderType.Value)
-            {
-                case DynamicBuilderType.Expression:
-                    this.m_dynamicMethodInfo = new ExpressionDynamicMethodInfo(method);
-                    break;
-
-                case DynamicBuilderType.Reflect:
-                    this.m_dynamicMethodInfo = new ReflectDynamicMethodInfo(method);
-                    break;
-
-                case DynamicBuilderType.SourceGenerator:
-                    this.m_dynamicMethodInfo = this.CreateDynamicMethodInfoFromSG();
-                    break;
-
-                default:
-                    break;
-            }
-
-            this.DynamicBuilderType = dynamicBuilderType.Value;
-            return;
-        }
-
+        ThrowHelper.ThrowIfNull(method, nameof(method));
+        this.m_info = method;
         this.m_dynamicMethodInfo = this.CreateDynamicMethodInfoFromSG();
         if (this.m_dynamicMethodInfo != null)
         {
-            this.DynamicBuilderType = DynamicBuilderType.SourceGenerator;
             return;
         }
 
         try
         {
             this.m_dynamicMethodInfo = new ExpressionDynamicMethodInfo(method);
-            this.DynamicBuilderType = DynamicBuilderType.Expression;
             return;
         }
         catch
         {
         }
         this.m_dynamicMethodInfo = new ReflectDynamicMethodInfo(method);
-        this.DynamicBuilderType = DynamicBuilderType.Reflect;
     }
 
     /// <summary>
@@ -94,16 +68,10 @@ public class Method
     /// </summary>
     /// <param name="targetType">目标类型。</param>
     /// <param name="methodName">目标方法名。</param>
-    /// <param name="dynamicBuilderType">指定构建的类型。</param>
-    public Method([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] Type targetType, string methodName, DynamicBuilderType? dynamicBuilderType = default)
-        : this(targetType.GetMethod(methodName), dynamicBuilderType)
+    public Method([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] Type targetType, string methodName)
+        : this(targetType.GetMethod(methodName))
     {
     }
-
-    /// <summary>
-    /// 获取调用器的构建类型。
-    /// </summary>
-    public DynamicBuilderType DynamicBuilderType { get; private set; }
 
     /// <summary>
     /// 是否具有返回值。当返回值为Task时，也会认为没有返回值。

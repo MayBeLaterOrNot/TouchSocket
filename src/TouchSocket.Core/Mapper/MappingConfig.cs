@@ -13,22 +13,36 @@
 namespace TouchSocket.Core;
 
 /// <summary>
-/// 动态构建类型
+/// 映射配置
 /// </summary>
-public enum DynamicBuilderType
+public class MappingConfig
 {
-    /// <summary>
-    /// 使用表达式树
-    /// </summary>
-    Expression,
 
     /// <summary>
-    /// 使用反射
+    /// 需要忽略的属性名集合
     /// </summary>
-    Reflect,
+    public HashSet<string> IgnoredProperties { get; set; } = new();
 
     /// <summary>
-    /// 使用源生成
+    /// 属性名映射字典 (源属性名 -> 目标属性名)
     /// </summary>
-    SourceGenerator
+    public Dictionary<string, string> PropertyMappings { get; set; } = new();
+
+    /// <summary>
+    /// 添加需要忽略的属性
+    /// </summary>
+    public MappingConfig Ignore(string propertyName)
+    {
+        this.IgnoredProperties.Add(propertyName);
+        return this;
+    }
+
+    /// <summary>
+    /// 添加属性映射
+    /// </summary>
+    public MappingConfig Map(string sourceProperty, string targetProperty)
+    {
+        this.PropertyMappings[sourceProperty] = targetProperty;
+        return this;
+    }
 }

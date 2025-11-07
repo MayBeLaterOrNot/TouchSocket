@@ -26,7 +26,8 @@ public partial class FileStorageStream : Stream
     /// <param name="fileStorage"></param>
     public FileStorageStream(FileStorage fileStorage)
     {
-        this.FileStorage = ThrowHelper.ThrowArgumentNullExceptionIf(fileStorage, nameof(fileStorage));
+        ThrowHelper.ThrowIfNull(fileStorage, nameof(fileStorage));
+        this.FileStorage = fileStorage;
     }
 
     /// <summary>

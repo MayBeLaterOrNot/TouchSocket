@@ -19,6 +19,8 @@ namespace TouchSocket.Core;
 /// 使用System.Text.Json进行字符串与类之间序列化和反序列化的格式化器。
 /// </summary>
 /// <typeparam name="TState">状态类型。</typeparam>
+[UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "使用该序列化时，会和源生成配合使用")]
+[UnconditionalSuppressMessage("AOT", "IL3050:", Justification = "使用该序列化时，会和源生成配合使用")]
 public class SystemTextJsonStringToClassSerializerFormatter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState> : ISerializerFormatter<string, TState>
 {
     /// <summary>

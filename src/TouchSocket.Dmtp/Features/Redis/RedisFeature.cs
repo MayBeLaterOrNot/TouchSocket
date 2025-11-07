@@ -25,8 +25,9 @@ public class RedisFeature : PluginBase, IDmtpConnectingPlugin, IDmtpReceivedPlug
     /// <param name="option">配置选项</param>
     public RedisFeature(DmtpRedisOption option)
     {
-        this.m_option = ThrowHelper.ThrowArgumentNullExceptionIf(option, nameof(option));
-        
+        ThrowHelper.ThrowIfNull(option, nameof(option));
+        this.m_option = option;
+
         // 设置默认的JSON转换器
         if (this.m_option.Converter != null)
         {

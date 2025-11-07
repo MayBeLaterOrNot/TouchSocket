@@ -11,6 +11,7 @@
 //------------------------------------------------------------------------------
 
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -29,6 +30,7 @@ public sealed class RpcMethod : Method
     /// 实例化一个Rpc调用函数，并在方法声明的类上操作
     /// </summary>
     /// <param name="methodInfo"></param>
+    [RequiresUnreferencedCode("此方法使用反射动态加载程序集，与剪裁不兼容。请改用安全的替代方法。")]
     public RpcMethod(MethodInfo methodInfo) : this(methodInfo, methodInfo.DeclaringType, methodInfo.DeclaringType)
     {
     }
@@ -39,7 +41,7 @@ public sealed class RpcMethod : Method
     /// <param name="method"></param>
     /// <param name="serverFromType"></param>
     /// <param name="serverToType"></param>
-    public RpcMethod(MethodInfo method, Type serverFromType, Type serverToType) : base(method)
+    public RpcMethod(MethodInfo method, [DynamicallyAccessedMembers(AOT.RpcRegister)] Type serverFromType, [DynamicallyAccessedMembers(AOT.RpcRegister)] Type serverToType) : base(method)
     {
         this.ServerFromType = serverFromType;
         this.ServerToType = serverToType;

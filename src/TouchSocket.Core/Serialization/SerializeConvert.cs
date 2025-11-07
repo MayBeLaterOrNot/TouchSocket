@@ -132,6 +132,8 @@ public static partial class SerializeConvert
     /// <param name="stream"></param>
     /// <param name="binder"></param>
     /// <returns></returns>
+    [RequiresDynamicCode("BinaryFormatter serialization uses dynamic code generation, the type of objects being processed cannot be statically discovered.")]
+    [RequiresUnreferencedCode("BinaryFormatter serialization is not trim compatible because the type of objects being processed cannot be statically discovered.")]
     public static T BinaryDeserialize<T>(Stream stream, SerializationBinder binder = null)
     {
         return (T)BinaryDeserialize(stream);

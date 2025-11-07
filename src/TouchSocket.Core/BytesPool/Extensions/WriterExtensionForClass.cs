@@ -156,7 +156,7 @@ public static partial class WriterExtension
     public static void WriteNormalString<TWriter>(this TWriter writer, string value, Encoding encoding)
         where TWriter : class, IBytesWriter
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(value, nameof(value));
+        ThrowHelper.ThrowIfNull(value, nameof(value));
         var maxSize = encoding.GetMaxByteCount(value.Length);
         var span = writer.GetSpan(maxSize);
         var chars = value.AsSpan();

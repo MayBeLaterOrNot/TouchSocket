@@ -27,7 +27,8 @@ public sealed class DmtpFileTransferFeature : PluginBase, IDmtpConnectingPlugin,
     /// <param name="option">配置选项</param>
     public DmtpFileTransferFeature(IResolver resolver, DmtpFileTransferOption option)
     {
-        this.m_option = ThrowHelper.ThrowArgumentNullExceptionIf(option, nameof(option));
+        ThrowHelper.ThrowIfNull(option, nameof(option));
+        this.m_option = option;
         this.m_option.FileResourceController ??= resolver.Resolve<IFileResourceController>() ?? FileResourceController.Default;
     }
 

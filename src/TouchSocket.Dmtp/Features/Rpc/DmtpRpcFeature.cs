@@ -29,7 +29,8 @@ public class DmtpRpcFeature : PluginBase, IDmtpFeature, IDmtpConnectingPlugin, I
     /// <param name="option">配置选项</param>
     public DmtpRpcFeature(IServiceProvider resolver, DmtpRpcOption option)
     {
-        this.m_option = ThrowHelper.ThrowArgumentNullExceptionIf(option, nameof(option));
+        ThrowHelper.ThrowIfNull(option, nameof(option));
+        this.m_option = option;
 
         // 设置默认的创建DmtpRpcActor委托
         this.m_option.CreateDmtpRpcActor ??= PrivateCreateDmtpRpcActor;

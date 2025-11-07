@@ -10,6 +10,8 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Collections.Generic;
+
 namespace TouchSocket.Core;
 
 /// <summary>
@@ -20,9 +22,9 @@ public interface IRegistrator : IRegistered
     /// <summary>
     /// 添加类型描述符。
     /// </summary>
-    /// <param name="key"></param>
     /// <param name="descriptor"></param>
-    void Register(DependencyDescriptor descriptor, string key);
+    /// <param name="key"></param>
+    void Register(DependencyDescriptor descriptor, object key);
 
     /// <summary>
     /// 添加类型描述符
@@ -35,8 +37,7 @@ public interface IRegistrator : IRegistered
     /// </summary>
     /// <param name="descriptor"></param>
     /// <param name="key"></param>
-    /// <returns></returns>
-    void Unregister(DependencyDescriptor descriptor, string key);
+    void Unregister(DependencyDescriptor descriptor, object key);
 
     /// <summary>
     /// 移除注册信息

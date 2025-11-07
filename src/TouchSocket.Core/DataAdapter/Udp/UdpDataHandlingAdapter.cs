@@ -114,7 +114,7 @@ public abstract class UdpDataHandlingAdapter : DataHandlingAdapter
     /// <param name="cancellationToken">可取消令箭</param>
     protected virtual async Task PreviewSendAsync(EndPoint endPoint, IRequestInfo requestInfo, CancellationToken cancellationToken)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(requestInfo, nameof(requestInfo));
+        ThrowHelper.ThrowIfNull(requestInfo, nameof(requestInfo));
 
         var requestInfoBuilder = (IRequestInfoBuilder)requestInfo;
 

@@ -298,7 +298,7 @@ public static class StringExtension
     /// <returns></returns>
     public static ReadOnlyMemory<byte> ToUtf8Bytes(this string value)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(value, nameof(value));
+        ThrowHelper.ThrowIfNull(value, nameof(value));
         return Encoding.UTF8.GetBytes(value);
     }
 

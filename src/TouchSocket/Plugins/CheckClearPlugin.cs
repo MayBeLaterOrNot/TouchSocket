@@ -36,8 +36,8 @@ public sealed class CheckClearPlugin<TClient> : PluginBase, ILoadedConfigPlugin
     /// <param name="options">配置选项</param>
     public CheckClearPlugin(ILog logger, CheckClearOption<TClient> options)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(logger, nameof(logger));
-        ThrowHelper.ThrowArgumentNullExceptionIf(options, nameof(options));
+        ThrowHelper.ThrowIfNull(logger, nameof(logger));
+        ThrowHelper.ThrowIfNull(options, nameof(options));
 
         this.m_logger = logger;
         this.m_checkClearType = options.CheckClearType;

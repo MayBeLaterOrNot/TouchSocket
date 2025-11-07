@@ -151,7 +151,7 @@ public class DependencyObject : SafetyDisposableObject, IDependencyObject
             this.m_lock.Enter(ref lockTakenFotThis);
             dependencyObject.m_lock.Enter(ref lockTakenFotOther);
 
-            ThrowHelper.ThrowArgumentNullExceptionIf(dependencyObject, nameof(dependencyObject));
+            ThrowHelper.ThrowIfNull(dependencyObject, nameof(dependencyObject));
 
             ThrowHelper.ThrowObjectDisposedExceptionIf(dependencyObject);
 

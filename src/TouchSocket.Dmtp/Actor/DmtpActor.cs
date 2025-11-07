@@ -818,7 +818,7 @@ public abstract class DmtpActor : DisposableObject, IDmtpActor
     /// <inheritdoc/>
     public void AddActor<TActor>(TActor actor) where TActor : class, IActor
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(actor, nameof(actor));
+        ThrowHelper.ThrowIfNull(actor, nameof(actor));
         var type = typeof(TActor);
 
         lock (this.m_syncRoot)
@@ -841,7 +841,7 @@ public abstract class DmtpActor : DisposableObject, IDmtpActor
     /// <inheritdoc/>
     public bool TryAddActor<TActor>(TActor actor) where TActor : class, IActor
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(actor, nameof(actor));
+        ThrowHelper.ThrowIfNull(actor, nameof(actor));
         var type = typeof(TActor);
 
         lock (this.m_syncRoot)

@@ -78,7 +78,7 @@ public class WebSocketDmtpClient : SetupClientWebSocket, IWebSocketDmtpClient
             this.m_tokenSourceForReceive = new CancellationTokenSource();
 
             var dmtpOption = this.Config.GetValue(DmtpConfigExtension.DmtpOptionProperty);
-            ThrowHelper.ThrowArgumentNullExceptionIf(dmtpOption, nameof(dmtpOption));
+            ThrowHelper.ThrowIfNull(dmtpOption, nameof(dmtpOption));
 
             await this.m_dmtpActor.ConnectAsync(dmtpOption, cancellationToken).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
         }

@@ -30,7 +30,8 @@ public class ReconnectionPlugin<TClient> : PluginBase, ILoadedConfigPlugin
     /// <param name="options">重连配置选项</param>
     public ReconnectionPlugin(ReconnectionOption<TClient> options)
     {
-        this.m_options = ThrowHelper.ThrowArgumentNullExceptionIf(options, nameof(options));
+        ThrowHelper.ThrowIfNull(options, nameof(options));
+        this.m_options = options;
     }
 
     /// <summary>

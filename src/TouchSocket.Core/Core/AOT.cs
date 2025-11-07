@@ -18,8 +18,16 @@ public static class AOT
 {
     public const DynamicallyAccessedMemberTypes SerializerFormatterMemberType = DynamicallyAccessedMemberTypes.All;
 
-    /// <summary>
-    /// DynamicallyAccessed
-    /// </summary>
-    public const DynamicallyAccessedMemberTypes ContainerMemberType = DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.PublicProperties;
+
+    public const DynamicallyAccessedMemberTypes Container = DynamicallyAccessedMemberTypes.PublicConstructors;
+
+    public const DynamicallyAccessedMemberTypes PluginMemberType = DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicMethods;
+
+    public const DynamicallyAccessedMemberTypes RpcInvoke = DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties;
+
+    public const DynamicallyAccessedMemberTypes MemberAccessor = DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties;
+
+    public const DynamicallyAccessedMemberTypes FastBinaryFormatter = DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties;
+
+    public const DynamicallyAccessedMemberTypes RpcRegister = DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.NonPublicProperties | DynamicallyAccessedMemberTypes.Interfaces | DynamicallyAccessedMemberTypes.NonPublicMethods;
 }

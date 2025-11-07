@@ -19,10 +19,10 @@ namespace TouchSocket.Core;
 /// </summary>
 public static class GlobalEnvironment
 {
-    /// <summary>
-    /// 动态构建类型，默认使用IL
-    /// </summary>
-    public static DynamicBuilderType DynamicBuilderType { get; set; } = DynamicBuilderType.SourceGenerator;
+    ///// <summary>
+    ///// 动态构建类型时仅仅使用反射。一般在unity等不支持动态代码的平台使用。
+    ///// </summary>
+    //public static bool ReflectOnly { get; set; } = false;
 
 #if NET6_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 

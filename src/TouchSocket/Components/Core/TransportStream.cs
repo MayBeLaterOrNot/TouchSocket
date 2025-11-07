@@ -31,7 +31,7 @@ public class TransportStream : Stream
     /// <param name="transport">传输层对象</param>
     public TransportStream(ITransport transport)
     {
-        transport = ThrowHelper.ThrowArgumentNullExceptionIf(transport, nameof(transport));
+        ThrowHelper.ThrowIfNull(transport, nameof(transport));
         this.m_writer = transport.Writer;
         this.m_reader = transport.Reader;
 

@@ -242,7 +242,7 @@ public abstract partial class SerialPortClientBase : SetupConfigObject, ISerialP
             await this.WaitClearConnect().ConfigureAwait(EasyTask.ContinueOnCapturedContext);
 
             var serialPortOption = this.Config.GetValue(SerialPortConfigExtension.SerialPortOptionProperty);
-            ThrowHelper.ThrowArgumentNullExceptionIf(serialPortOption, nameof(serialPortOption));
+            ThrowHelper.ThrowIfNull(serialPortOption, nameof(serialPortOption));
 
             var serialPort = CreateSerial(serialPortOption);
             await this.PrivateOnSerialConnecting(new ConnectingEventArgs()).ConfigureAwait(EasyTask.ContinueOnCapturedContext);

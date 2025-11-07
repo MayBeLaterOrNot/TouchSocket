@@ -41,7 +41,9 @@ public partial class TcpClientBase
                 return;
             }
 
-            var iPHost = ThrowHelper.ThrowArgumentNullExceptionIf(this.RemoteIPHost, nameof(this.RemoteIPHost));
+
+            var iPHost = this.RemoteIPHost;
+            ThrowHelper.ThrowIfNull(iPHost, nameof(this.RemoteIPHost));
 
             var socket = this.CreateSocket(iPHost);
 

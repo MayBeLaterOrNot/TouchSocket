@@ -47,7 +47,6 @@ public partial class WebApiEventArgs : PluginEventArgs
     public HttpResponse Response { get; }
 }
 
-#if SystemNetHttp
 
 /// <summary>
 /// WebAPI事件参数类，用于封装HTTP请求和响应信息
@@ -76,5 +75,3 @@ public partial class WebApiEventArgs
     /// </summary>
     public System.Net.Http.HttpResponseMessage ResponseMessage { get; }
 }
-
-#endif

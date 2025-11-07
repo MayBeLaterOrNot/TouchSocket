@@ -10,17 +10,8 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
-#if SystemNetHttp
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using System.Net.Http;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using TouchSocket.Core;
-using TouchSocket.Http;
 using TouchSocket.Rpc;
 using TouchSocket.Sockets;
 using HttpClient = System.Net.Http.HttpClient;
@@ -116,5 +107,3 @@ public class WebApiClientSlim : Http.HttpClientSlim, IWebApiClientBase
         }
     }
 }
-
-#endif

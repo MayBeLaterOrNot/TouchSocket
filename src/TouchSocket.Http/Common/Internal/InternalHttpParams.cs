@@ -18,25 +18,25 @@ internal sealed class InternalHttpParams : Dictionary<string, string>, IHttpPara
     {
         get
         {
-            ThrowHelper.ThrowArgumentNullExceptionIf(key, nameof(key));
+            ThrowHelper.ThrowIfNull(key, nameof(key));
             return this.TryGetValue(key, out var value) ? value : null;
         }
         set
         {
-            ThrowHelper.ThrowArgumentNullExceptionIf(key, nameof(key));
+            ThrowHelper.ThrowIfNull(key, nameof(key));
             base[key] = value;
         }
     }
 
     public new void Add(string key, string value)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(key, nameof(key));
+        ThrowHelper.ThrowIfNull(key, nameof(key));
         base[key] = value; // 直接覆盖，避免二次查找
     }
 
     public string Get(string key)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(key, nameof(key));
+        ThrowHelper.ThrowIfNull(key, nameof(key));
         return this.TryGetValue(key, out var value) ? value : null;
     }
 }

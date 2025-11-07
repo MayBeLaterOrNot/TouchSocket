@@ -89,7 +89,7 @@ public sealed class WebSocketFeatureOptions
     /// <returns>返回当前配置选项实例，支持链式调用</returns>
     public WebSocketFeatureOptions SetVerifyConnection(Func<IHttpSessionClient, HttpContext, bool> verifyConnection)
     {
-        verifyConnection = ThrowHelper.ThrowArgumentNullExceptionIf(verifyConnection, nameof(verifyConnection));
+        ThrowHelper.ThrowIfNull(verifyConnection, nameof(verifyConnection));
 
         this.VerifyConnection = async (client, context) =>
         {
@@ -106,7 +106,7 @@ public sealed class WebSocketFeatureOptions
     /// <returns>返回当前配置选项实例，支持链式调用</returns>
     public WebSocketFeatureOptions SetVerifyConnection(Func<IHttpSessionClient, HttpContext, Task<bool>> verifyConnection)
     {
-        this.VerifyConnection = ThrowHelper.ThrowArgumentNullExceptionIf(verifyConnection, nameof(verifyConnection));
+        ThrowHelper.ThrowIfNull(verifyConnection, nameof(verifyConnection));
         return this;
     }
 }

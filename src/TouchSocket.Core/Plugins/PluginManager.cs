@@ -46,7 +46,7 @@ public sealed class PluginManager : DisposableObject, IPluginManager
     public IResolver Resolver => this.m_scopedResolver.Resolver;
 
     /// <inheritdoc/>
-    public void Add([DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] Type pluginType, Func<object, PluginEventArgs, Task> pluginInvokeHandler, Delegate sourceDelegate = default)
+    public void Add([DynamicallyAccessedMembers(AOT.PluginMemberType)] Type pluginType, Func<object, PluginEventArgs, Task> pluginInvokeHandler, Delegate sourceDelegate = default)
     {
         lock (this.m_locker)
         {
@@ -56,10 +56,11 @@ public sealed class PluginManager : DisposableObject, IPluginManager
     }
 
     /// <inheritdoc/>
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("ReflectionAnalysis", "IL2075:Unreferenced code may be removed", Justification = "pluginInterface类型可确定，AOT下不会丢失Method")]
-    public IPlugin Add([DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] Type pluginType)
+    [UnconditionalSuppressMessage("AOT", "IL2075", Justification = "pluginInterface类型可确定，AOT下不会丢失Method")]
+    [UnconditionalSuppressMessage("AOT", "IL2026", Justification = "Method方法在AOT确定")]
+    public IPlugin Add([DynamicallyAccessedMembers(AOT.PluginMemberType)] Type pluginType)
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(pluginType, nameof(pluginType));
+        ThrowHelper.ThrowIfNull(pluginType, nameof(pluginType));
 
         this.ThrowIfDisposed();
 
@@ -131,10 +132,11 @@ public sealed class PluginManager : DisposableObject, IPluginManager
     }
 
     /// <inheritdoc/>
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("ReflectionAnalysis", "IL2075:Unreferenced code may be removed", Justification = "pluginInterface类型可确定，AOT下不会丢失Method")]
-    public void Add<[DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] TPlugin>(TPlugin plugin) where TPlugin : class, IPlugin
+    [UnconditionalSuppressMessage("AOT", "IL2075", Justification = "pluginInterface类型可确定，AOT下不会丢失Method")]
+    [UnconditionalSuppressMessage("AOT", "IL2026", Justification = "Method方法在AOT确定")]
+    public void Add<[DynamicallyAccessedMembers(AOT.PluginMemberType)] TPlugin>(TPlugin plugin) where TPlugin : class, IPlugin
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(plugin, nameof(plugin));
+        ThrowHelper.ThrowIfNull(plugin, nameof(plugin));
 
         this.ThrowIfDisposed();
 
@@ -182,7 +184,7 @@ public sealed class PluginManager : DisposableObject, IPluginManager
     }
 
     /// <inheritdoc/>
-    public int GetFromIocCount([DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] Type pluginType)
+    public int GetFromIocCount([DynamicallyAccessedMembers(AOT.PluginMemberType)] Type pluginType)
     {
         if (!this.Enable)
         {
@@ -193,13 +195,13 @@ public sealed class PluginManager : DisposableObject, IPluginManager
     }
 
     /// <inheritdoc/>
-    public int GetPluginCount([DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] Type pluginType)
+    public int GetPluginCount([DynamicallyAccessedMembers(AOT.PluginMemberType)] Type pluginType)
     {
         return this.m_pluginMethods.TryGetValue(pluginType, out var pluginModel) ? pluginModel.GetPluginEntities().Count : 0;
     }
 
     /// <inheritdoc/>
-    public ValueTask<bool> RaiseAsync([DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] Type pluginType, IResolver resolver, object sender, PluginEventArgs e)
+    public ValueTask<bool> RaiseAsync([DynamicallyAccessedMembers(AOT.PluginMemberType)] Type pluginType, IResolver resolver, object sender, PluginEventArgs e)
     {
         if (!this.Enable)
         {
@@ -243,7 +245,7 @@ public sealed class PluginManager : DisposableObject, IPluginManager
     }
 
     /// <inheritdoc/>
-    public void Remove([DynamicallyAccessedMembers(PluginManagerExtension.PluginAccessedMemberTypes)] Type pluginType, Delegate func)
+    public void Remove([DynamicallyAccessedMembers(AOT.PluginMemberType)] Type pluginType, Delegate func)
     {
         lock (this.m_locker)
         {

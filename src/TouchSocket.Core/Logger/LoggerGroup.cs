@@ -25,7 +25,7 @@ public class LoggerGroup : LoggerBase
     /// <param name="logs"></param>
     public LoggerGroup(params ILog[] logs) : this()
     {
-        ThrowHelper.ThrowArgumentNullExceptionIf(logs, nameof(logs));
+        ThrowHelper.ThrowIfNull(logs, nameof(logs));
         foreach (var log in logs)
         {
             this.AddLogger(log);

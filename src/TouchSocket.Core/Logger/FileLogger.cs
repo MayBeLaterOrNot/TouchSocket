@@ -66,7 +66,11 @@ public sealed class FileLogger : LoggerBase, IDisposable
     public Func<LogLevel, string> CreateLogFolder
     {
         get => this.m_createLogFolder;
-        set => this.m_createLogFolder = ThrowHelper.ThrowArgumentNullExceptionIf(value, nameof(this.CreateLogFolder));
+        set
+        {
+            ThrowHelper.ThrowIfNull(value, nameof(this.CreateLogFolder));
+            this.m_createLogFolder = value;
+        }
     }
 
     /// <summary>

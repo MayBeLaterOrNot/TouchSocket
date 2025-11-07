@@ -40,7 +40,7 @@ public static partial class RpcContainerExtension
     /// <typeparam name="TRpcServerProvider"></typeparam>
     /// <param name="registrator"></param>
     /// <returns></returns>
-    public static IRegistrator AddRpcServerProvider<[DynamicallyAccessedMembers(AOT.ContainerMemberType)] TRpcServerProvider>(this IRegistrator registrator) where TRpcServerProvider : class, IRpcServerProvider
+    public static IRegistrator AddRpcServerProvider<[DynamicallyAccessedMembers(AOT.Container)] TRpcServerProvider>(this IRegistrator registrator) where TRpcServerProvider : class, IRpcServerProvider
     {
         registrator.RegisterSingleton<IRpcServerProvider, TRpcServerProvider>();
         return registrator;

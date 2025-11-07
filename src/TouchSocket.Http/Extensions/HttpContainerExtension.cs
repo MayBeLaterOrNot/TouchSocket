@@ -18,15 +18,14 @@ namespace TouchSocket.Http;
 public static class HttpContainerExtension
 {
     /// <summary>
-    /// 向注册器中添加跨域服务。
+    /// 向注册器中添加跨域服务
     /// </summary>
-    /// <param name="registrator"></param>
-    /// <param name="action"></param>
-    /// <returns></returns>
-    public static IRegistrator AddCors(this IRegistrator registrator, Action<CorsOptions> action)
+    /// <param name="registrator">容器注册器</param>
+    /// <param name="action">跨域选项配置委托</param>
+    public static void AddCors(this IRegistrator registrator, Action<CorsOptions> action)
     {
         var corsOptions = new CorsOptions();
         action.Invoke(corsOptions);
-        return registrator.RegisterSingleton<ICorsService>(new CorsService(corsOptions));
+        registrator.RegisterSingleton<ICorsService, CorsService>(new CorsService(corsOptions));
     }
 }
