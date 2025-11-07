@@ -116,26 +116,9 @@ internal class Program
                     {
                         //重连间隔3秒
                         options.PollingInterval = TimeSpan.FromSeconds(3);
-                        options.CheckAction = async (c, i) =>//重新定义检活策略
-                        {
-                            //第1步，先判断在线状态，如果不在线，则直接Dead
-                            if (!c.Online)
-                            {
-                                return ConnectionCheckResult.Dead;
-                            }
 
-                            //第2步，进行活动时间判断，如果最近活动时间不超过3秒，则跳过本次重连检查
-                            if (DateTime.UtcNow - c.GetLastActiveTime() < TimeSpan.FromSeconds(3))
-                            {
-                                return ConnectionCheckResult.Skip;
-                            }
-
-                            using var cts = new CancellationTokenSource(5000);
-                            var result = await c.PingAsync(cts.Token);
-
-                            //第3步，根据Ping结果返回最终结果
-                            return result.IsSuccess ? ConnectionCheckResult.Alive : ConnectionCheckResult.Dead;
-                        };
+                        //使用Dmtp状态、心跳等联合检测作为连接状态检查依据。
+                        options.UseDmtpCheckAction();
                     });
                 })
         #endregion

@@ -11,292 +11,297 @@
 // ------------------------------------------------------------------------------
 
 using System.Diagnostics;
-using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
 using TouchSocket.Core;
 
 namespace AotDynamicMethodConsoleApp;
 
 internal class Program
 {
+    private const int DefaultPerformanceTestCount = 10_000_000;
+
     private static async Task Main(string[] args)
     {
         var consoleAction = new ConsoleAction();
-        consoleAction.OnException += ConsoleAction_OnException;
-        consoleAction.Add("1", "简单调用", SimpleRun);
-        consoleAction.Add("2", "IL调用", ILRun);
-        consoleAction.Add("3", "表达式树调用", ExpressionRun);
-        consoleAction.Add("4", "反射调用", ReflectRun);
-        consoleAction.Add("5", "源生成调用", SourceGeneratorRun);
-        consoleAction.Add("6", "性能测试", Performance);
-        consoleAction.Add("7", "多参数调用", MultiParameters);
-        consoleAction.Add("8", "自定义动态调用", CustomDynamicMethod);
-        consoleAction.Add("9", "TaskRun", TaskRun);
-        consoleAction.Add("10", "TaskObjectRun", TaskObjectRun);
+        consoleAction.OnException += OnException;
+        
+        // 注册所有示例命令
+        RegisterCommands(consoleAction);
 
         consoleAction.ShowAll();
         await consoleAction.RunCommandLineAsync();
     }
 
-    private static void ConsoleAction_OnException(Exception ex)
+    /// <summary>
+    /// 注册所有示例命令
+    /// </summary>
+    private static void RegisterCommands(ConsoleAction consoleAction)
     {
-        Console.WriteLine(ex.Message);
+        consoleAction.Add("1", "简单调用", SimpleRun);
+        consoleAction.Add("2", "性能测试", Performance);
+        consoleAction.Add("3", "多参数调用", MultiParameters);
+        consoleAction.Add("4", "自定义动态调用", CustomDynamicMethod);
+        consoleAction.Add("5", "异步Task调用", TaskRun);
+        consoleAction.Add("6", "异步Task<T>调用", TaskObjectRun);
     }
 
+    /// <summary>
+    /// 全局异常处理
+    /// </summary>
+    private static void OnException(Exception ex)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"错误: {ex.Message}");
+        Console.ResetColor();
+    }
+
+    /// <summary>
+    /// 示例1: 简单的方法调用
+    /// </summary>
     private static void SimpleRun()
     {
+        Console.WriteLine("=== 简单调用示例 ===");
+        
         var method = new Method(typeof(MyClass), nameof(MyClass.Run));
-
         var myClass = new MyClass();
+        
         method.Invoke(myClass);
+        
+        Console.WriteLine("调用完成！");
     }
 
-    private static void ILRun()
-    {
-        var method = new Method(typeof(MyClass), nameof(MyClass.Run), DynamicBuilderType.IL);
-
-        var myClass = new MyClass();
-        method.Invoke(myClass);
-    }
-    private static void ExpressionRun()
-    {
-        var method = new Method(typeof(MyClass), nameof(MyClass.Run), DynamicBuilderType.Expression);
-
-        var myClass = new MyClass();
-        method.Invoke(myClass);
-    }
-
-    private static void ReflectRun()
-    {
-        var method = new Method(typeof(MyClass), nameof(MyClass.Run), DynamicBuilderType.Reflect);
-
-        var myClass = new MyClass();
-        method.Invoke(myClass);
-    }
-
-    private static void SourceGeneratorRun()
-    {
-        var method = new Method(typeof(MyClass), nameof(MyClass.Run), DynamicBuilderType.SourceGenerator);
-
-        var myClass = new MyClass();
-        method.Invoke(myClass);
-    }
-
+    /// <summary>
+    /// 示例2: 性能测试
+    /// </summary>
     private static void Performance()
     {
-        var count = 10000000;
+        Console.WriteLine("=== 性能测试 ===");
+        Console.WriteLine($"将执行 {DefaultPerformanceTestCount:N0} 次方法调用...\n");
 
         var myClass = new MyClass();
+        var method = new Method(typeof(MyClass), nameof(MyClass.Performance));
+        var stopwatch = Stopwatch.StartNew();
 
-        var stopwatch = new Stopwatch();
-
-        var methods = GetMethods(typeof(MyClass), nameof(MyClass.Performance));
-
-        foreach (var item in methods)
+        try
         {
-            stopwatch.Restart();
-            try
+            for (var i = 0; i < DefaultPerformanceTestCount; i++)
             {
-                var method = item;
-                for (var i = 0; i < count; i++)
-                {
-                    method.Invoke(myClass);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                stopwatch.Stop();
-                Console.WriteLine($"Method BuilderType={item.DynamicBuilderType},Time={stopwatch.ElapsedMilliseconds}");
-            }
-        }
-
-    }
-
-    private static void MultiParameters()
-    {
-        var myClass = new MyClass();
-
-        var methods = GetMethods(typeof(MyClass), nameof(MyClass.MultiParameters));
-
-        foreach (var item in methods)
-        {
-            var ps = new object[] { "hello", 0, 200 };
-            try
-            {
-                var method = item;
-                method.Invoke(myClass, ps);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                Console.WriteLine($"Method BuilderType={item.DynamicBuilderType},ps0={ps[0]},ps1={ps[1]},ps2={ps[2]}");
-            }
-        }
-
-    }
-
-    private static void CustomDynamicMethod()
-    {
-        var myClass = new MyClass();
-
-        var methods = GetMethods(typeof(MyClass), nameof(MyClass.CustomDynamicMethod));
-
-        foreach (var item in methods)
-        {
-            try
-            {
-                var method = item;
                 method.Invoke(myClass);
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                Console.WriteLine($"Method BuilderType={item.DynamicBuilderType}");
-            }
+            
+            stopwatch.Stop();
+            
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"✓ 执行完成");
+            Console.WriteLine($"  总耗时: {stopwatch.ElapsedMilliseconds:N0} ms");
+            Console.WriteLine($"  平均耗时: {(double)stopwatch.ElapsedMilliseconds / DefaultPerformanceTestCount:F6} ms/call");
+            Console.WriteLine($"  吞吐量: {DefaultPerformanceTestCount / (stopwatch.ElapsedMilliseconds / 1000.0):N0} calls/sec");
+            Console.ResetColor();
         }
-
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"✗ 性能测试失败: {ex.Message}");
+            Console.WriteLine($"  已完成部分测试，耗时: {stopwatch.ElapsedMilliseconds:N0} ms");
+            Console.ResetColor();
+        }
     }
 
+    /// <summary>
+    /// 示例3: 多参数调用，包括 out 和 ref 参数
+    /// </summary>
+    private static void MultiParameters()
+    {
+        Console.WriteLine("=== 多参数调用示例 ===");
+        
+        var myClass = new MyClass();
+        var method = new Method(typeof(MyClass), nameof(MyClass.MultiParameters));
+
+        var parameters = new object[] { "hello", 0, 200 };
+        
+        Console.WriteLine($"调用前参数: a=\"{parameters[0]}\", b={parameters[1]}, c={parameters[2]}");
+        
+        try
+        {
+            method.Invoke(myClass, parameters);
+            
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"调用后参数: a=\"{parameters[0]}\", b={parameters[1]}, c={parameters[2]}");
+            Console.ResetColor();
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"调用失败: {ex.Message}");
+            Console.ResetColor();
+        }
+    }
+
+    /// <summary>
+    /// 示例4: 使用自定义特性的动态方法调用
+    /// </summary>
+    private static void CustomDynamicMethod()
+    {
+        Console.WriteLine("=== 自定义动态方法调用示例 ===");
+        
+        var myClass = new MyClass();
+        var method = new Method(typeof(MyClass), nameof(MyClass.CustomDynamicMethod));
+
+        try
+        {
+            method.Invoke(myClass);
+            Console.WriteLine("自定义动态方法调用成功！");
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"调用失败: {ex.Message}");
+            Console.ResetColor();
+        }
+    }
+
+    /// <summary>
+    /// 示例5: 异步 Task 方法调用
+    /// </summary>
     private static async Task TaskRun()
     {
+        Console.WriteLine("=== 异步Task调用示例 ===");
+        
         var myClass = new MyClass();
+        var method = new Method(typeof(MyClass), nameof(MyClass.TaskRun));
 
-        var methods = GetMethods(typeof(MyClass), nameof(MyClass.TaskRun));
+        Console.WriteLine($"方法是否可等待: {method.IsAwaitable}");
+        Console.WriteLine($"返回类型: {method.ReturnKind}");
 
-        foreach (var item in methods)
+        try
         {
-            try
+            if (method.IsAwaitable)
             {
-                var method = item;
-                if (method.IsAwaitable)
-                {
-                    await method.InvokeAsync(myClass);
-                }
+                await method.InvokeAsync(myClass);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("异步调用完成！");
+                Console.ResetColor();
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                Console.WriteLine($"Method BuilderType={item.DynamicBuilderType}");
+                Console.WriteLine("该方法不是异步方法");
             }
         }
-
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"异步调用失败: {ex.Message}");
+            Console.ResetColor();
+        }
     }
 
+    /// <summary>
+    /// 示例6: 异步 Task<T> 方法调用（带返回值）
+    /// </summary>
     private static async Task TaskObjectRun()
     {
+        Console.WriteLine("=== 异步Task<T>调用示例 ===");
+        
         var myClass = new MyClass();
+        var method = new Method(typeof(MyClass), nameof(MyClass.TaskObjectRun));
 
-        var methods = GetMethods(typeof(MyClass), nameof(MyClass.TaskObjectRun));
+        Console.WriteLine($"方法返回类型: {method.ReturnKind}");
+        Console.WriteLine($"实际返回值类型: {method.RealReturnType?.Name ?? "void"}");
 
-        foreach (var item in methods)
+        try
         {
-            try
+            if (method.ReturnKind == MethodReturnKind.AwaitableObject)
             {
-                var method = item;
-                if (method.ReturnKind == MethodReturnKind.AwaitableObject)
-                {
-                    var result = await method.InvokeAsync(myClass);
-                    Console.WriteLine($"result={result}");
-                }
-
+                var result = await method.InvokeAsync(myClass);
+                
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"异步调用完成，返回值: {result}");
+                Console.ResetColor();
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                Console.WriteLine($"Method BuilderType={item.DynamicBuilderType}");
+                Console.WriteLine("该方法不返回异步对象");
             }
         }
-
-    }
-
-    private static List<Method> GetMethods(Type type, string name)
-    {
-        var methods = new List<Method>();
-        foreach (var item in Enum.GetValues(typeof(DynamicBuilderType)).OfType<DynamicBuilderType>())
+        catch (Exception ex)
         {
-            try
-            {
-                methods.Add(new Method(type, name, item));
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"异步调用失败: {ex.Message}");
+            Console.ResetColor();
         }
-
-        return methods;
-    }
-
-    private static bool IsDynamicCodeCompiled()
-    {
-#if NET8_0_OR_GREATER
-        return RuntimeFeature.IsDynamicCodeCompiled;
-#else
-        return true;
-#endif
     }
 }
 
+/// <summary>
+/// 测试类，包含各种类型的动态方法
+/// </summary>
 public class MyClass
 {
+    /// <summary>
+    /// 简单的void方法
+    /// </summary>
     [DynamicMethod]
     public void Run()
     {
-        Console.WriteLine("Run");
+        Console.WriteLine("Run 方法被调用");
     }
 
+    /// <summary>
+    /// 用于性能测试的空方法
+    /// </summary>
     [DynamicMethod]
     public void Performance()
     {
-
+        // 空方法体，用于性能测试
     }
 
+    /// <summary>
+    /// 包含多种参数类型的方法：普通参数、out参数、ref参数
+    /// </summary>
     [DynamicMethod]
     public void MultiParameters(string a, out int b, ref int c)
     {
         b = 10;
         c = c + 1;
-        Console.WriteLine("MultiParameters");
+        Console.WriteLine($"MultiParameters 方法被调用: a={a}, b(out)=10, c(ref)={c}");
     }
 
+    /// <summary>
+    /// 使用自定义特性标记的方法
+    /// </summary>
     [MyDynamicMethod]
     public void CustomDynamicMethod()
     {
-        Console.WriteLine("CustomDynamicMethod");
+        Console.WriteLine("CustomDynamicMethod 方法被调用（使用自定义特性）");
     }
 
+    /// <summary>
+    /// 异步Task方法（无返回值）
+    /// </summary>
     [DynamicMethod]
     public async Task TaskRun()
     {
-        Console.WriteLine("TaskRun");
-        await Task.CompletedTask;
+        Console.WriteLine("TaskRun 开始执行...");
+        await Task.Delay(100); // 模拟异步操作
+        Console.WriteLine("TaskRun 执行完成");
     }
 
+    /// <summary>
+    /// 异步Task<T>方法（有返回值）
+    /// </summary>
     [DynamicMethod]
     public async Task<int> TaskObjectRun()
     {
-        Console.WriteLine("TaskObjectRun");
-        await Task.CompletedTask;
+        Console.WriteLine("TaskObjectRun 开始执行...");
+        await Task.Delay(100); // 模拟异步操作
+        Console.WriteLine("TaskObjectRun 执行完成");
         return 10;
     }
 }
 
+/// <summary>
+/// 自定义的动态方法特性
+/// </summary>
 [DynamicMethod]
 [AttributeUsage(AttributeTargets.Method)]
 public class MyDynamicMethodAttribute : Attribute

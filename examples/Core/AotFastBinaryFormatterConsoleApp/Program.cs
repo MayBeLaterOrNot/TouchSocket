@@ -28,7 +28,7 @@ namespace FastBinaryFormatterConsoleApp
             //SerializeConvert.AddFastBinary<Dictionary<string,string>>();
             //SerializeConvert.AddFastBinary<Dictionary<int,Arg>>();
 
-            GlobalEnvironment.DynamicBuilderType = DynamicBuilderType.Reflect;
+
             ShouldSerializeObjBeOk();
             Console.ReadKey();
         }

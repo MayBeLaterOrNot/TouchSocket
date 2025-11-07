@@ -98,19 +98,19 @@ internal class MyClass3
     /// <summary>
     /// 直接按类型，默认方式获取
     /// </summary>
-    [DependencyInject]
+
     public MyClass1 MyClass1 { get; set; }
 
     /// <summary>
     /// 获得指定类型的对象，然后赋值到object
     /// </summary>
-    [DependencyInject(typeof(MyClass2))]
+
     public object MyClass2 { get; set; }
 
     /// <summary>
     /// 按照类型+Key获取
     /// </summary>
-    [DependencyInject("key")]
+
     public MyClass1 KeyMyClass1 { get; set; }
 }
 
@@ -118,7 +118,7 @@ internal class MyClass4
 {
     public MyClass1 MyClass1 { get; private set; }
 
-    [DependencyInject]
+
     public void MethodInject(MyClass1 myClass1)
     {
         this.MyClass1 = myClass1;

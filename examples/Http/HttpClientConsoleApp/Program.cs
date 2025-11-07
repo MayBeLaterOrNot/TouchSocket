@@ -12,6 +12,7 @@
 
 using System;
 using System.IO;
+using System.IO.Pipelines;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -337,12 +338,13 @@ internal class BigDataHttpContent : HttpContent
         return true;
     }
 
-    protected override async Task WriteContent(Func<ReadOnlyMemory<byte>, CancellationToken, Task> writeFunc, CancellationToken token)
+
+    protected override async Task WriteContent(PipeWriter writer, CancellationToken cancellationToken)
     {
         var buffer = new byte[this.bufferLength];
         for (var i = 0; i < this.count; i++)
         {
-            await writeFunc.Invoke(buffer, token);
+            await writer.WriteAsync(buffer, cancellationToken);
             //Console.WriteLine(i);
         }
     }
