@@ -14,7 +14,11 @@ import { TouchSocketWebApiDefinition } from "@site/src/components/Definition.js"
 
 ## 一、说明
 
-WebApi是**通用**的Rpc调用，与**编程语言无关**，与**操作系统无关**。其路由机制模仿AspNetCore，可实现很多路由机制。但是因为http兼容性错综复杂，所以目前TouchSocket的WebApi仅支持**GET**、**POST**函数。使用体验接近于AspNetCore。
+WebApi是**通用**的Rpc调用，与**编程语言无关**，与**操作系统无关**。
+
+其路由机制模仿AspNetCore，可实现很多路由机制，支持`GET`、`POST`、`PUT`、`DELETE`等**所有函数**。
+
+使用体验接近于AspNetCore，但是更加轻量级，性能更高。且完全支持`AOT`编译。
 
 <BilibiliCard title="为什么需要WebApi代替Http" link="https://www.bilibili.com/cheese/play/ep1688287" isPro="true"/>
 

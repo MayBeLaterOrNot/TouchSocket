@@ -23,7 +23,7 @@ internal class Program
     {
         var consoleAction = new ConsoleAction();
         consoleAction.OnException += OnException;
-        
+
         // 注册所有示例命令
         RegisterCommands(consoleAction);
 
@@ -60,12 +60,13 @@ internal class Program
     private static void SimpleRun()
     {
         Console.WriteLine("=== 简单调用示例 ===");
-        
+
+        #region 简单调用示例
         var method = new Method(typeof(MyClass), nameof(MyClass.Run));
-        var myClass = new MyClass();
-        
-        method.Invoke(myClass);
-        
+        var instance = new MyClass();
+        method.Invoke(instance);
+        #endregion
+
         Console.WriteLine("调用完成！");
     }
 
@@ -77,19 +78,22 @@ internal class Program
         Console.WriteLine("=== 性能测试 ===");
         Console.WriteLine($"将执行 {DefaultPerformanceTestCount:N0} 次方法调用...\n");
 
+        #region 性能测试代码
         var myClass = new MyClass();
         var method = new Method(typeof(MyClass), nameof(MyClass.Performance));
         var stopwatch = Stopwatch.StartNew();
 
+        for (var i = 0; i < 10_000_000; i++)
+        {
+            method.Invoke(myClass);
+        }
+
+        stopwatch.Stop();
+        Console.WriteLine($"总耗时: {stopwatch.ElapsedMilliseconds} ms");
+        #endregion
+
         try
         {
-            for (var i = 0; i < DefaultPerformanceTestCount; i++)
-            {
-                method.Invoke(myClass);
-            }
-            
-            stopwatch.Stop();
-            
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"✓ 执行完成");
             Console.WriteLine($"  总耗时: {stopwatch.ElapsedMilliseconds:N0} ms");
@@ -113,18 +117,22 @@ internal class Program
     private static void MultiParameters()
     {
         Console.WriteLine("=== 多参数调用示例 ===");
-        
-        var myClass = new MyClass();
+
+        #region out和ref参数调用
         var method = new Method(typeof(MyClass), nameof(MyClass.MultiParameters));
+        var instance = new MyClass();
 
         var parameters = new object[] { "hello", 0, 200 };
-        
+        method.Invoke(instance, parameters);
+
+        Console.WriteLine($"out参数b={parameters[1]}"); // 输出: out参数b=10
+        Console.WriteLine($"ref参数c={parameters[2]}"); // 输出: ref参数c=201
+        #endregion
+
         Console.WriteLine($"调用前参数: a=\"{parameters[0]}\", b={parameters[1]}, c={parameters[2]}");
-        
+
         try
         {
-            method.Invoke(myClass, parameters);
-            
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"调用后参数: a=\"{parameters[0]}\", b={parameters[1]}, c={parameters[2]}");
             Console.ResetColor();
@@ -143,13 +151,15 @@ internal class Program
     private static void CustomDynamicMethod()
     {
         Console.WriteLine("=== 自定义动态方法调用示例 ===");
-        
-        var myClass = new MyClass();
+
+        #region 自定义特性调用
         var method = new Method(typeof(MyClass), nameof(MyClass.CustomDynamicMethod));
+        var instance = new MyClass();
+        method.Invoke(instance);
+        #endregion
 
         try
         {
-            method.Invoke(myClass);
             Console.WriteLine("自定义动态方法调用成功！");
         }
         catch (Exception ex)
@@ -166,9 +176,17 @@ internal class Program
     private static async Task TaskRun()
     {
         Console.WriteLine("=== 异步Task调用示例 ===");
-        
-        var myClass = new MyClass();
+
+        #region 异步Task调用
         var method = new Method(typeof(MyClass), nameof(MyClass.TaskRun));
+        var instance = new MyClass();
+
+        // 判断是否为异步方法
+        if (method.IsAwaitable)
+        {
+            await method.InvokeAsync(instance);
+        }
+        #endregion
 
         Console.WriteLine($"方法是否可等待: {method.IsAwaitable}");
         Console.WriteLine($"返回类型: {method.ReturnKind}");
@@ -177,7 +195,6 @@ internal class Program
         {
             if (method.IsAwaitable)
             {
-                await method.InvokeAsync(myClass);
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("异步调用完成！");
                 Console.ResetColor();
@@ -201,9 +218,17 @@ internal class Program
     private static async Task TaskObjectRun()
     {
         Console.WriteLine("=== 异步Task<T>调用示例 ===");
-        
-        var myClass = new MyClass();
+
+        #region 异步Task泛型调用
         var method = new Method(typeof(MyClass), nameof(MyClass.TaskObjectRun));
+        var instance = new MyClass();
+
+        if (method.ReturnKind == MethodReturnKind.AwaitableObject)
+        {
+            var result = await method.InvokeAsync(instance);
+            Console.WriteLine($"返回值: {result}"); // 输出: 返回值: 10
+        }
+        #endregion
 
         Console.WriteLine($"方法返回类型: {method.ReturnKind}");
         Console.WriteLine($"实际返回值类型: {method.RealReturnType?.Name ?? "void"}");
@@ -212,10 +237,9 @@ internal class Program
         {
             if (method.ReturnKind == MethodReturnKind.AwaitableObject)
             {
-                var result = await method.InvokeAsync(myClass);
-                
+                var result2 = await method.InvokeAsync(instance);
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"异步调用完成，返回值: {result}");
+                Console.WriteLine($"异步调用完成，返回值: {result2}");
                 Console.ResetColor();
             }
             else
@@ -232,163 +256,10 @@ internal class Program
     }
 }
 
-#region 标记方法示例
-public class MyClass
-{
-    [DynamicMethod]
-    public void Run()
-    {
-        Console.WriteLine("Run 方法被调用");
-    }
-}
-#endregion
-
-#region 简单调用示例
-var method = new Method(typeof(MyClass), nameof(MyClass.Run));
-var instance = new MyClass();
-method.Invoke(instance);
-#endregion
-
-#region 异步Task调用声明
-public class MyClass
-{
-    [DynamicMethod]
-    public async Task TaskRun()
-    {
-        Console.WriteLine("开始执行...");
-        await Task.Delay(100);
-        Console.WriteLine("执行完成");
-    }
-}
-#endregion
-
-#region 异步Task调用
-var method = new Method(typeof(MyClass), nameof(MyClass.TaskRun));
-var instance = new MyClass();
-
-// 判断是否为异步方法
-if (method.IsAwaitable)
-{
-    await method.InvokeAsync(instance);
-}
-#endregion
-
-#region 异步Task泛型调用声明
-public class MyClass
-{
-    [DynamicMethod]
-    public async Task<int> TaskObjectRun()
-    {
-        await Task.Delay(100);
-        return 10;
-    }
-}
-#endregion
-
-#region 异步Task泛型调用
-var method = new Method(typeof(MyClass), nameof(MyClass.TaskObjectRun));
-var instance = new MyClass();
-
-if (method.ReturnKind == MethodReturnKind.AwaitableObject)
-{
-    var result = await method.InvokeAsync(instance);
-    Console.WriteLine($"返回值: {result}"); // 输出: 返回值: 10
-}
-#endregion
-
-#region out和ref参数声明
-public class MyClass
-{
-    [DynamicMethod]
-    public void MultiParameters(string a, out int b, ref int c)
-    {
-        b = 10;
-        c = c + 1;
-        Console.WriteLine($"a={a}, b={b}, c={c}");
-    }
-}
-#endregion
-
-#region out和ref参数调用
-var method = new Method(typeof(MyClass), nameof(MyClass.MultiParameters));
-var instance = new MyClass();
-
-var parameters = new object[] { "hello", 0, 200 };
-method.Invoke(instance, parameters);
-
-Console.WriteLine($"out参数b={parameters[1]}"); // 输出: out参数b=10
-Console.WriteLine($"ref参数c={parameters[2]}"); // 输出: ref参数c=201
-#endregion
-
-#region 自定义特性声明
-[DynamicMethod]
-[AttributeUsage(AttributeTargets.Method)]
-public class MyDynamicMethodAttribute : Attribute
-{
-}
-
-public class MyClass
-{
-    [MyDynamicMethod]
-    public void CustomDynamicMethod()
-    {
-        Console.WriteLine("CustomDynamicMethod 方法被调用");
-    }
-}
-#endregion
-
-#region 自定义特性调用
-var method = new Method(typeof(MyClass), nameof(MyClass.CustomDynamicMethod));
-var instance = new MyClass();
-method.Invoke(instance);
-#endregion
-
-#region 性能测试声明
-public class MyClass
-{
-    [DynamicMethod]
-    public void Performance()
-    {
-        // 空方法体，用于性能测试
-    }
-}
-#endregion
-
-#region 性能测试代码
-var myClass = new MyClass();
-var method = new Method(typeof(MyClass), nameof(MyClass.Performance));
-var stopwatch = Stopwatch.StartNew();
-
-for (var i = 0; i < 10_000_000; i++)
-{
-    method.Invoke(myClass);
-}
-
-stopwatch.Stop();
-Console.WriteLine($"总耗时: {stopwatch.ElapsedMilliseconds} ms");
-#endregion
-
-#region 缓存Method实例推荐
-public static class MethodCache
-{
-    public static readonly Method RunMethod = new Method(typeof(MyClass), nameof(MyClass.Run));
-}
-
-// 重复使用
-MethodCache.RunMethod.Invoke(instance);
-#endregion
-
-#region 缓存Method实例不推荐
-for (var i = 0; i < 10000; i++)
-{
-    var method = new Method(typeof(MyClass), nameof(MyClass.Run)); // 浪费性能
-    method.Invoke(instance);
-}
-#endregion
-
 /// <summary>
 /// 测试类，包含各种类型的动态方法
 /// </summary>
+#region 标记方法示例
 public class MyClass
 {
     /// <summary>
@@ -399,26 +270,31 @@ public class MyClass
     {
         Console.WriteLine("Run 方法被调用");
     }
+    #endregion
 
     /// <summary>
     /// 用于性能测试的空方法
     /// </summary>
+    #region 性能测试声明
     [DynamicMethod]
     public void Performance()
     {
         // 空方法体，用于性能测试
     }
+    #endregion
 
     /// <summary>
     /// 包含多种参数类型的方法：普通参数、out参数、ref参数
     /// </summary>
+    #region out和ref参数声明
     [DynamicMethod]
     public void MultiParameters(string a, out int b, ref int c)
     {
         b = 10;
         c = c + 1;
-        Console.WriteLine($"MultiParameters 方法被调用: a={a}, b(out)=10, c(ref)={c}");
+        Console.WriteLine($"a={a}, b={b}, c={c}");
     }
+    #endregion
 
     /// <summary>
     /// 使用自定义特性标记的方法
@@ -432,32 +308,49 @@ public class MyClass
     /// <summary>
     /// 异步Task方法（无返回值）
     /// </summary>
+    #region 异步Task调用声明
     [DynamicMethod]
     public async Task TaskRun()
     {
-        Console.WriteLine("TaskRun 开始执行...");
-        await Task.Delay(100); // 模拟异步操作
-        Console.WriteLine("TaskRun 执行完成");
+        Console.WriteLine("开始执行...");
+        await Task.Delay(100);
+        Console.WriteLine("执行完成");
     }
+    #endregion
 
     /// <summary>
     /// 异步Task<T>方法（有返回值）
     /// </summary>
+    #region 异步Task泛型调用声明
     [DynamicMethod]
     public async Task<int> TaskObjectRun()
     {
-        Console.WriteLine("TaskObjectRun 开始执行...");
-        await Task.Delay(100); // 模拟异步操作
-        Console.WriteLine("TaskObjectRun 执行完成");
+        await Task.Delay(100);
         return 10;
     }
+    #endregion
 }
 
 /// <summary>
 /// 自定义的动态方法特性
 /// </summary>
+#region 自定义特性声明
 [DynamicMethod]
 [AttributeUsage(AttributeTargets.Method)]
 public class MyDynamicMethodAttribute : Attribute
 {
 }
+#endregion
+
+#region 缓存Method实例推荐
+/// <summary>
+/// 推荐的缓存方式：将Method实例缓存为静态字段，避免重复创建
+/// </summary>
+public static class MethodCache
+{
+    public static readonly Method RunMethod = new Method(typeof(MyClass), nameof(MyClass.Run));
+
+    // 使用示例：
+    // MethodCache.RunMethod.Invoke(instance);
+}
+#endregion
