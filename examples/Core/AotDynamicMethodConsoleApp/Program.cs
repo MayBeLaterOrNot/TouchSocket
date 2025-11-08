@@ -232,6 +232,160 @@ internal class Program
     }
 }
 
+#region 标记方法示例
+public class MyClass
+{
+    [DynamicMethod]
+    public void Run()
+    {
+        Console.WriteLine("Run 方法被调用");
+    }
+}
+#endregion
+
+#region 简单调用示例
+var method = new Method(typeof(MyClass), nameof(MyClass.Run));
+var instance = new MyClass();
+method.Invoke(instance);
+#endregion
+
+#region 异步Task调用声明
+public class MyClass
+{
+    [DynamicMethod]
+    public async Task TaskRun()
+    {
+        Console.WriteLine("开始执行...");
+        await Task.Delay(100);
+        Console.WriteLine("执行完成");
+    }
+}
+#endregion
+
+#region 异步Task调用
+var method = new Method(typeof(MyClass), nameof(MyClass.TaskRun));
+var instance = new MyClass();
+
+// 判断是否为异步方法
+if (method.IsAwaitable)
+{
+    await method.InvokeAsync(instance);
+}
+#endregion
+
+#region 异步Task泛型调用声明
+public class MyClass
+{
+    [DynamicMethod]
+    public async Task<int> TaskObjectRun()
+    {
+        await Task.Delay(100);
+        return 10;
+    }
+}
+#endregion
+
+#region 异步Task泛型调用
+var method = new Method(typeof(MyClass), nameof(MyClass.TaskObjectRun));
+var instance = new MyClass();
+
+if (method.ReturnKind == MethodReturnKind.AwaitableObject)
+{
+    var result = await method.InvokeAsync(instance);
+    Console.WriteLine($"返回值: {result}"); // 输出: 返回值: 10
+}
+#endregion
+
+#region out和ref参数声明
+public class MyClass
+{
+    [DynamicMethod]
+    public void MultiParameters(string a, out int b, ref int c)
+    {
+        b = 10;
+        c = c + 1;
+        Console.WriteLine($"a={a}, b={b}, c={c}");
+    }
+}
+#endregion
+
+#region out和ref参数调用
+var method = new Method(typeof(MyClass), nameof(MyClass.MultiParameters));
+var instance = new MyClass();
+
+var parameters = new object[] { "hello", 0, 200 };
+method.Invoke(instance, parameters);
+
+Console.WriteLine($"out参数b={parameters[1]}"); // 输出: out参数b=10
+Console.WriteLine($"ref参数c={parameters[2]}"); // 输出: ref参数c=201
+#endregion
+
+#region 自定义特性声明
+[DynamicMethod]
+[AttributeUsage(AttributeTargets.Method)]
+public class MyDynamicMethodAttribute : Attribute
+{
+}
+
+public class MyClass
+{
+    [MyDynamicMethod]
+    public void CustomDynamicMethod()
+    {
+        Console.WriteLine("CustomDynamicMethod 方法被调用");
+    }
+}
+#endregion
+
+#region 自定义特性调用
+var method = new Method(typeof(MyClass), nameof(MyClass.CustomDynamicMethod));
+var instance = new MyClass();
+method.Invoke(instance);
+#endregion
+
+#region 性能测试声明
+public class MyClass
+{
+    [DynamicMethod]
+    public void Performance()
+    {
+        // 空方法体，用于性能测试
+    }
+}
+#endregion
+
+#region 性能测试代码
+var myClass = new MyClass();
+var method = new Method(typeof(MyClass), nameof(MyClass.Performance));
+var stopwatch = Stopwatch.StartNew();
+
+for (var i = 0; i < 10_000_000; i++)
+{
+    method.Invoke(myClass);
+}
+
+stopwatch.Stop();
+Console.WriteLine($"总耗时: {stopwatch.ElapsedMilliseconds} ms");
+#endregion
+
+#region 缓存Method实例推荐
+public static class MethodCache
+{
+    public static readonly Method RunMethod = new Method(typeof(MyClass), nameof(MyClass.Run));
+}
+
+// 重复使用
+MethodCache.RunMethod.Invoke(instance);
+#endregion
+
+#region 缓存Method实例不推荐
+for (var i = 0; i < 10000; i++)
+{
+    var method = new Method(typeof(MyClass), nameof(MyClass.Run)); // 浪费性能
+    method.Invoke(instance);
+}
+#endregion
+
 /// <summary>
 /// 测试类，包含各种类型的动态方法
 /// </summary>
