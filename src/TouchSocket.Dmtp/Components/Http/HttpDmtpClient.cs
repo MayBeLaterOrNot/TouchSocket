@@ -222,7 +222,7 @@ public partial class HttpDmtpClient : HttpClientBase, IHttpDmtpClient
     private async Task DmtpReceiveLoopAsync(ITransport transport)
     {
         var cancellationToken = transport.ClosedToken;
-
+        using var reader = new PooledBytesReader();
         await transport.ReadLocker.WaitAsync(cancellationToken).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
         try
         {
@@ -240,7 +240,7 @@ public partial class HttpDmtpClient : HttpClientBase, IHttpDmtpClient
 
                 try
                 {
-                    var reader = new ClassBytesReader(result.Buffer);
+                    reader.Reset(result.Buffer);
                     if (!await this.OnTcpReceiving(reader).ConfigureAwait(EasyTask.ContinueOnCapturedContext))
                     {
                         await this.m_adapter.ReceivedInputAsync(reader).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
@@ -252,6 +252,8 @@ public partial class HttpDmtpClient : HttpClientBase, IHttpDmtpClient
                     {
                         return;
                     }
+                    reader.Clear();
+
                 }
                 catch (Exception ex)
                 {

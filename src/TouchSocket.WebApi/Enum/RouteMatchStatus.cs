@@ -10,19 +10,29 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
-using TouchSocket.Http;
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 
 namespace TouchSocket.WebApi;
 
 /// <summary>
-/// Web API 映射接口。
+/// 路由匹配状态
 /// </summary>
-public interface IWebApiMapping : IEnumerable<MappingMethod>
+public enum RouteMatchStatus
 {
     /// <summary>
-    /// 将映射设置为只读。
+    /// 成功匹配
     /// </summary>
-    void MakeReadonly();
+    Success,
 
-    RouteMatchResult TryMatch(string url, HttpMethod httpMethod);
+    /// <summary>
+    /// 路由未找到
+    /// </summary>
+    NotFound,
+
+    /// <summary>
+    /// 方法不允许
+    /// </summary>
+    MethodNotAllowed
 }

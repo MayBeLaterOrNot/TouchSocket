@@ -53,52 +53,103 @@ public sealed class WebApiParserPlugin : PluginBase, IHttpPlugin, ITcpClosedPlug
     {
         var httpMethod = e.Context.Request.Method;
         var url = e.Context.Request.RelativeURL;
-        var rpcMethod = this.Mapping.Match(url, httpMethod);
-        if (rpcMethod != null)
+
+        // 尝试匹配路由
+        var matchResult = this.m_mapping.TryMatch(url, httpMethod);
+
+        switch (matchResult.Status)
         {
-            var callContext = new WebApiCallContext(client, rpcMethod, e.Context, client.Resolver);
+            case RouteMatchStatus.Success:
+                // 路由和方法都匹配,执行RPC调用
+                await this.ExecuteRpcMethodAsync(client, e, matchResult.RpcMethod).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
+                return;
+
+            case RouteMatchStatus.MethodNotAllowed:
+                // 路由匹配但方法不允许,返回405
+                await this.ResponseMethodNotAllowedAsync(client, e.Context, matchResult.AllowedMethods).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
+                return;
+
+            case RouteMatchStatus.NotFound:
+            default:
+                // 路由未找到,继续执行后续插件
+                await e.InvokeNext().ConfigureAwait(EasyTask.ContinueOnCapturedContext);
+                return;
+        }
+    }
+
+    private async Task ExecuteRpcMethodAsync(IHttpSessionClient client, HttpContextEventArgs e, RpcMethod rpcMethod)
+    {
+        var callContext = new WebApiCallContext(client, rpcMethod, e.Context, client.Resolver);
+        try
+        {
+            client.SetValue(s_webApiCallContextProperty, callContext);
+            var invokeResult = new InvokeResult();
+            var ps = new object[rpcMethod.Parameters.Length];
+
             try
             {
-                client.SetValue(s_webApiCallContextProperty, callContext);
-                var invokeResult = new InvokeResult();
-                var ps = new object[rpcMethod.Parameters.Length];
-                try
+                for (var i = 0; i < rpcMethod.Parameters.Length; i++)
                 {
-                    for (var i = 0; i < rpcMethod.Parameters.Length; i++)
-                    {
-                        var parameter = rpcMethod.Parameters[i];
-                        ps[i] = await this.ParseParameterAsync(parameter, callContext).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
-                    }
+                    var parameter = rpcMethod.Parameters[i];
+                    ps[i] = await this.ParseParameterAsync(parameter, callContext).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
                 }
-                catch (Exception ex)
-                {
-                    invokeResult.Status = InvokeStatus.Exception;
-                    invokeResult.Message = ex.Message;
-                    invokeResult.Exception = ex;
-                }
-
-                callContext.SetParameters(ps);
-                invokeResult = await this.m_rpcServerProvider.ExecuteAsync(callContext, invokeResult).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
-
-                if (e.Context.Response.Responsed)
-                {
-                    return;
-                }
-
-                if (!client.Online)
-                {
-                    return;
-                }
-
-                await this.ResponseAsync(client, e.Context, invokeResult).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
             }
-            finally
+            catch (Exception ex)
             {
-                callContext.Dispose();
-                client.RemoveValue(s_webApiCallContextProperty);
+                invokeResult.Status = InvokeStatus.Exception;
+                invokeResult.Message = ex.Message;
+                invokeResult.Exception = ex;
             }
+
+            callContext.SetParameters(ps);
+            invokeResult = await this.m_rpcServerProvider.ExecuteAsync(callContext, invokeResult).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
+
+            if (e.Context.Response.Responsed)
+            {
+                return;
+            }
+
+            if (!client.Online)
+            {
+                return;
+            }
+
+            await this.ResponseAsync(client, e.Context, invokeResult).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
         }
-        await e.InvokeNext().ConfigureAwait(EasyTask.ContinueOnCapturedContext);
+        finally
+        {
+            callContext.Dispose();
+            client.RemoveValue(s_webApiCallContextProperty);
+        }
+    }
+
+    private async Task ResponseMethodNotAllowedAsync(IHttpSessionClient client, HttpContext httpContext, IEnumerable<HttpMethod> allowedMethods)
+    {
+        var httpResponse = httpContext.Response;
+
+        // 设置Allow头,列出允许的方法
+        if (allowedMethods != null)
+        {
+            var allowHeader = string.Join(", ", allowedMethods.Select(m => m.ToString()));
+            httpResponse.Headers.TryAdd("Allow", allowHeader);
+        }
+
+        var jsonString = this.Converter.Serialize(httpContext, new ActionResult()
+        {
+            Status = InvokeStatus.UnEnable,
+            Message = "HTTP方法不被允许"
+        });
+
+        await httpResponse
+            .SetContent(jsonString)
+            .SetStatus(405, "Method Not Allowed")
+            .AnswerAsync()
+            .ConfigureAwait(EasyTask.ContinueOnCapturedContext);
+
+        if (!httpContext.Request.KeepAlive)
+        {
+            await client.CloseAsync().ConfigureAwait(EasyTask.ContinueOnCapturedContext);
+        }
     }
 
     /// <inheritdoc/>
@@ -250,6 +301,8 @@ public sealed class WebApiParserPlugin : PluginBase, IHttpPlugin, ITcpClosedPlug
         {
             this.m_mapping.AddRpcMethod(rpcMethod);
         }
+
+        this.m_mapping.MakeReadonly();
     }
 
     private async Task ResponseAsync(IHttpSessionClient client, HttpContext httpContext, InvokeResult invokeResult)
@@ -293,14 +346,14 @@ public sealed class WebApiParserPlugin : PluginBase, IHttpPlugin, ITcpClosedPlug
             case InvokeStatus.UnEnable:
                 {
                     var jsonString = this.Converter.Serialize(httpContext, new ActionResult() { Status = invokeResult.Status, Message = invokeResult.Message });
-                    httpResponse.SetContent(jsonString).SetStatus(405, "UnEnable");
+                    httpResponse.SetContent(jsonString).SetStatus(405, "Method Not Allowed");
                     break;
                 }
             case InvokeStatus.InvocationException:
             case InvokeStatus.Exception:
                 {
                     var jsonString = this.Converter.Serialize(httpContext, new ActionResult() { Status = invokeResult.Status, Message = invokeResult.Message });
-                    httpResponse.SetContent(jsonString).SetStatus(422, "Exception");
+                    httpResponse.SetContent(jsonString).SetStatus(422, "Unprocessable Entity");
                     break;
                 }
         }

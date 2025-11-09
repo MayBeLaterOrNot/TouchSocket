@@ -90,7 +90,7 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
                     {
                         if (method.ReturnType.IsValueType)
                         {
-                            codeBuilder.AppendLine($"var result = ({method.ReturnType.ToDisplayString()})o;");
+                            codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.Unbox<{method.ReturnType.ToDisplayString()}>(o);");
                         }
                         else
                         {
@@ -121,7 +121,7 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
                     {
                         if (method.ReturnType.IsValueType)
                         {
-                            codeBuilder.AppendLine($"var result = ({method.ReturnType.ToDisplayString()})o;");
+                            codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.Unbox<{method.ReturnType.ToDisplayString()}>(o);");
                         }
                         else
                         {
@@ -136,7 +136,6 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
                         {
                             codeBuilder.AppendLine("return await result;");
                         }
-                        codeBuilder.AppendLine("return await result;");
                     }
                 }
             }
@@ -173,7 +172,14 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
         for (var i = 0; i < method.Parameters.Length; i++)
         {
             var parameter = method.Parameters[i];
-            codeBuilder.AppendLine($"var {parameter.Name}=({parameter.Type.ToDisplayString()})ps[{i}];");
+            if (parameter.Type.IsValueType)
+            {
+                codeBuilder.AppendLine($"var {parameter.Name}=System.Runtime.CompilerServices.Unsafe.Unbox<{parameter.Type.ToDisplayString()}>(ps[{i}]);");
+            }
+            else
+            {
+                codeBuilder.AppendLine($"var {parameter.Name}=System.Runtime.CompilerServices.Unsafe.As<{parameter.Type.ToDisplayString()}>(ps[{i}]);");
+            }
 
             if (parameter.RefKind == RefKind.Ref)
             {
@@ -198,7 +204,14 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
                 }
                 else
                 {
-                    codeBuilder.AppendLine($"(({method.ContainingType.ToDisplayString()})instance).{method.Name}({string.Join(",", ps)});");
+                    if (method.ContainingType.IsValueType)
+                    {
+                        codeBuilder.AppendLine($"System.Runtime.CompilerServices.Unsafe.Unbox<{method.ContainingType.ToDisplayString()}>(instance).{method.Name}({string.Join(",", ps)});");
+                    }
+                    else
+                    {
+                        codeBuilder.AppendLine($"System.Runtime.CompilerServices.Unsafe.As<{method.ContainingType.ToDisplayString()}>(instance).{method.Name}({string.Join(",", ps)});");
+                    }
                 }
             }
             else
@@ -209,7 +222,14 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
                 }
                 else
                 {
-                    codeBuilder.AppendLine($"var result = (({method.ContainingType.ToDisplayString()})instance).{method.Name}({string.Join(",", ps)});");
+                    if (method.ContainingType.IsValueType)
+                    {
+                        codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.Unbox<{method.ContainingType.ToDisplayString()}>(instance).{method.Name}({string.Join(",", ps)});");
+                    }
+                    else
+                    {
+                        codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.As<{method.ContainingType.ToDisplayString()}>(instance).{method.Name}({string.Join(",", ps)});");
+                    }
                 }
             }
         }
@@ -223,7 +243,14 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
                 }
                 else
                 {
-                    codeBuilder.AppendLine($"(({method.ContainingType.ToDisplayString()})instance).{method.Name}();");
+                    if (method.ContainingType.IsValueType)
+                    {
+                        codeBuilder.AppendLine($"System.Runtime.CompilerServices.Unsafe.Unbox<{method.ContainingType.ToDisplayString()}>(instance).{method.Name}();");
+                    }
+                    else
+                    {
+                        codeBuilder.AppendLine($"System.Runtime.CompilerServices.Unsafe.As<{method.ContainingType.ToDisplayString()}>(instance).{method.Name}();");
+                    }
                 }
             }
             else
@@ -234,7 +261,14 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
                 }
                 else
                 {
-                    codeBuilder.AppendLine($"var result = (({method.ContainingType.ToDisplayString()})instance).{method.Name}();");
+                    if (method.ContainingType.IsValueType)
+                    {
+                        codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.Unbox<{method.ContainingType.ToDisplayString()}>(instance).{method.Name}();");
+                    }
+                    else
+                    {
+                        codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.As<{method.ContainingType.ToDisplayString()}>(instance).{method.Name}();");
+                    }
                 }
             }
         }

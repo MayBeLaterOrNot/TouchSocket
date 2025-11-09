@@ -9,6 +9,7 @@
     <Import_RootNamespace>TouchSocket.Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Core\ClassBytesReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\ThrowHelperCore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Dmtp\Actor\SealedDmtpActor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Rpc\ThrowHelperRpc.cs" />

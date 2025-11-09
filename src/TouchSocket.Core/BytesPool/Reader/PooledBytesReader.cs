@@ -11,43 +11,27 @@
 // ------------------------------------------------------------------------------
 
 using System.Buffers;
+using System.Runtime.CompilerServices;
 
 namespace TouchSocket.Core;
 
-/// <summary>
-/// 表示一个基于类的字节读取器，提供对字节序列的读取功能。
-/// 继承自<see cref="DisposableObject"/>并实现<see cref="IBytesReader"/>接口。
-/// </summary>
-/// <remarks>
-/// ClassBytesReader是引用类型实现，适用于需要在多个方法间传递或长期持有的场景。
-/// 内部使用缓存机制来优化多段序列的读取性能，对于单段序列提供零拷贝访问。
-/// 使用完毕后应调用<see cref="Dispose"/>方法释放可能缓存的内存资源。
-/// </remarks>
-public class ClassBytesReader : DisposableObject, IBytesReader
+
+public sealed class PooledBytesReader : IDisposable, IBytesReader
 {
-    private readonly ReadOnlySequence<byte> m_sequence;
+    private ReadOnlySequence<byte> m_sequence;
     private IMemoryOwner<byte> m_memoryOwner;
 
     private long m_position = 0;
 
-    /// <summary>
-    /// 使用指定的只读字节序列初始化<see cref="ClassBytesReader"/>的新实例。
-    /// </summary>
-    /// <param name="sequence">要读取的只读字节序列。</param>
-    public ClassBytesReader(ReadOnlySequence<byte> sequence)
+    public void Reset(ReadOnlySequence<byte> sequence)
     {
+        this.m_position = 0;
         this.m_sequence = sequence;
     }
 
-    /// <summary>
-    /// 使用指定的只读内存初始化<see cref="ClassBytesReader"/>的新实例。
-    /// </summary>
-    /// <param name="memory">要读取的只读内存。</param>
-    /// <remarks>
-    /// 内部会将内存转换为<see cref="ReadOnlySequence{T}"/>进行处理。
-    /// </remarks>
-    public ClassBytesReader(ReadOnlyMemory<byte> memory)
+    public void Reset(ReadOnlyMemory<byte> memory)
     {
+        this.m_position = 0;
         this.m_sequence = new ReadOnlySequence<byte>(memory);
     }
 
@@ -69,15 +53,11 @@ public class ClassBytesReader : DisposableObject, IBytesReader
         this.m_position += count;
     }
 
-    /// <inheritdoc/>
-    protected override void Dispose(bool disposing)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Clear()
     {
-        if (disposing)
-        {
-            this.m_memoryOwner?.Dispose();
-            this.m_memoryOwner = default;
-        }
-        base.Dispose(disposing);
+        this.m_memoryOwner?.Dispose();
+        this.m_memoryOwner = default;
     }
 
     /// <inheritdoc/>
@@ -127,5 +107,11 @@ public class ClassBytesReader : DisposableObject, IBytesReader
             this.m_memoryOwner = MemoryPool<byte>.Shared.Rent(size);
         }
         return this.m_memoryOwner.Memory.Slice(0, size); // 返回精确大小的切片
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        this.Clear();
     }
 }

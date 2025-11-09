@@ -261,7 +261,7 @@ public abstract class WebSocketClientBase : HttpClientBase, IWebSocket
     private async Task WebSocketReceiveLoopAsync(ITransport transport)
     {
         var cancellationToken = transport.ClosedToken;
-
+        using var reader = new PooledBytesReader();
         await transport.ReadLocker.WaitAsync(cancellationToken).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
         try
         {
@@ -279,7 +279,8 @@ public abstract class WebSocketClientBase : HttpClientBase, IWebSocket
 
                 try
                 {
-                    var reader = new ClassBytesReader(result.Buffer);
+                    reader.Reset(result.Buffer);
+
                     if (!await this.OnTcpReceiving(reader).ConfigureAwait(EasyTask.ContinueOnCapturedContext))
                     {
                         await this.m_dataHandlingAdapter.ReceivedInputAsync(reader).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
@@ -291,6 +292,7 @@ public abstract class WebSocketClientBase : HttpClientBase, IWebSocket
                     {
                         return;
                     }
+                    reader.Clear();
                 }
                 catch (Exception ex)
                 {

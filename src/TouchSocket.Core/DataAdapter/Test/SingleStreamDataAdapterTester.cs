@@ -138,11 +138,12 @@ public class SingleStreamDataAdapterTester : DisposableObject
 
     private async Task ReceivedLoopAsync(CancellationToken cancellationToken)
     {
+        using var reader = new PooledBytesReader();
         while (!cancellationToken.IsCancellationRequested)
         {
             var readResult = await this.m_pipe.Reader.ReadAsync(cancellationToken);
             var sequence = readResult.Buffer;
-            var reader = new ClassBytesReader(sequence);
+            reader.Reset(sequence);
             await this.m_adapter.ReceivedInputAsync(reader).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
 
 
@@ -156,6 +157,8 @@ public class SingleStreamDataAdapterTester : DisposableObject
             {
                 return;
             }
+
+            reader.Clear();
         }
     }
 

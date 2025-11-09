@@ -271,6 +271,7 @@ public abstract partial class TcpClientBase : SetupConfigObject, ITcpSession
     /// <param name="transport">传输层对象</param>
     protected virtual async Task ReceiveLoopAsync(ITransport transport)
     {
+        using var reader = new PooledBytesReader();
         var cancellationToken = transport.ClosedToken;
 
         await transport.ReadLocker.WaitAsync(cancellationToken).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
@@ -304,7 +305,7 @@ public abstract partial class TcpClientBase : SetupConfigObject, ITcpSession
 
                 try
                 {
-                    var reader = new ClassBytesReader(result.Buffer);
+                    reader.Reset(result.Buffer);
                     if (!await this.OnTcpReceiving(reader).ConfigureAwait(EasyTask.ContinueOnCapturedContext))
                     {
                         if (this.m_dataHandlingAdapter == null)
@@ -327,6 +328,8 @@ public abstract partial class TcpClientBase : SetupConfigObject, ITcpSession
                     {
                         return;
                     }
+
+                    reader.Clear();
                 }
                 catch (Exception ex)
                 {

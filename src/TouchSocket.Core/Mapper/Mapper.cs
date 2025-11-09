@@ -19,7 +19,6 @@ namespace TouchSocket.Core;
 /// <summary>
 /// 映射数据
 /// </summary>
-
 public static class Mapper
 {
     private const DynamicallyAccessedMemberTypes RequiredMemberTypes =
