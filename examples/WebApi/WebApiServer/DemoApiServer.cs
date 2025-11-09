@@ -17,6 +17,7 @@ using TouchSocket.WebApi;
 namespace WebApiServerApp;
 
 #region 定义WebApi服务
+
 public partial class DemoApiServer : SingletonRpcServer
 {
     private readonly ILog m_logger;
@@ -32,5 +33,10 @@ public partial class DemoApiServer : SingletonRpcServer
         return a + b;
     }
 }
-#endregion
+
+#endregion 定义WebApi服务
+
+
+
+
 

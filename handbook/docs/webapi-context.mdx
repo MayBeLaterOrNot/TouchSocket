@@ -4,246 +4,110 @@ title: WebAPI 调用上下文
 ---
 
 import BilibiliCard from '@site/src/components/BilibiliCard.js';
+import CustomCodeBlock from './CodeBlocks/CustomCodeBlock';
 
 ## 一、调用上下文
 
-在 WebAPI 方法中，可以通过 `IWebApiCallContext` 访问请求的详细信息。
+在 WebAPI 方法中，可以通过 `IWebApiCallContext` 访问请求的详细信息和进行高级操作。
 
-<BilibiliCard title="获取调用上下文" link="https://www.bilibili.com/cheese/play/ep1688332" isPro="true"/>
+<BilibiliCard title="在WebApi服务方法中获取调用上下文" link="https://www.bilibili.com/cheese/play/ep1709018" isPro="true"/>
+<BilibiliCard title="使用调用上下文完成获取IP、取消调用、日志记录等功能" link="https://www.bilibili.com/cheese/play/ep1709019" isPro="true"/>
 
 ### 1.1 获取调用上下文
 
-```csharp showLineNumbers
-public partial class ApiServer : SingletonRpcServer
-{
-    [WebApi(Method = HttpMethodType.Get)]
-    public string GetClientInfo(IWebApiCallContext callContext)
-    {
-        var ip = callContext.Caller.IP;
-        var port = callContext.Caller.Port;
-        return $"Client: {ip}:{port}";
-    }
-}
-```
+<CustomCodeBlock region="使用调用上下文"/>
 
-### 1.2 访问 HTTP 上下文
+**调用上下文提供的信息：**
 
-通过调用上下文访问完整的 HTTP 请求和响应：
-
-```csharp showLineNumbers
-[WebApi(Method = HttpMethodType.Get)]
-public string GetRequestInfo(IWebApiCallContext callContext)
-{
-    var httpContext = callContext.HttpContext;
-    var request = httpContext.Request;
-    var response = httpContext.Response;
-
-    // 获取请求信息
-    var method = request.Method;
-    var url = request.URL;
-    var userAgent = request.Headers["User-Agent"];
-
-    // 设置响应头
-    response.SetHeader("X-Custom-Header", "CustomValue");
-
-    return $"Method: {method}, URL: {url}";
-}
-```
+- `callContext.Caller` - 客户端连接对象（IP、Port、Id 等）
+- `callContext.HttpContext` - HTTP 上下文
+- `callContext.HttpContext.Request` - HTTP 请求对象
+- `callContext.HttpContext.Response` - HTTP 响应对象
 
 ## 二、客户端信息
 
-### 2.1 获取客户端 IP
+### 2.1 获取客户端 IP 和端口
 
-```csharp showLineNumbers
+通过 `Caller` 属性获取客户端连接信息：
+
+<CustomCodeBlock region="使用调用上下文"/>
+
+**可用信息**：
+- `callContext.Caller.IP` - 客户端 IP 地址
+- `callContext.Caller.Port` - 客户端端口
+- `callContext.Caller.Id` - 客户端连接 ID
+
+## 三、HTTP 上下文
+
+### 3.1 访问 HTTP 请求
+
+通过 `HttpContext.Request` 访问请求信息：
+
+- `request.Method` - HTTP 方法（GET、POST 等）
+- `request.URL` - 完整 URL
+- `request.RelativeURL` - 相对路径
+- `request.Headers` - 请求头集合
+- `request.Query` - 查询参数集合
+
+### 3.2 访问 HTTP 响应
+
+通过 `HttpContext.Response` 设置响应：
+
+- `response.SetStatus(code, message)` - 设置状态码
+- `response.SetHeader(name, value)` - 设置响应头
+- `response.ContentType` - 设置内容类型
+- `response.SetContent(data)` - 设置响应内容
+
+## 四、响应定制
+
+### 4.1 自定义响应状态码
+
+```csharp
 [WebApi(Method = HttpMethodType.Get)]
-public string GetClientIp(IWebApiCallContext callContext)
-{
-    return callContext.Caller.IP;
-}
-```
-
-### 2.2 获取客户端 ID
-
-```csharp showLineNumbers
-[WebApi(Method = HttpMethodType.Get)]
-public string GetClientId(IWebApiCallContext callContext)
-{
-    return callContext.Caller.Id;
-}
-```
-
-## 三、请求信息
-
-### 3.1 获取请求头
-
-```csharp showLineNumbers
-[WebApi(Method = HttpMethodType.Get)]
-public string GetHeaders(IWebApiCallContext callContext)
-{
-    var headers = callContext.HttpContext.Request.Headers;
-    var authorization = headers["Authorization"];
-    var contentType = headers["Content-Type"];
-    
-    return $"Auth: {authorization}, ContentType: {contentType}";
-}
-```
-
-### 3.2 获取 Query 参数
-
-```csharp showLineNumbers
-[WebApi(Method = HttpMethodType.Get)]
-public string GetQueryParams(IWebApiCallContext callContext)
-{
-    var query = callContext.HttpContext.Request.Query;
-    var page = query.Get("page");
-    var size = query.Get("size");
-    
-    return $"Page: {page}, Size: {size}";
-}
-```
-
-### 3.3 获取请求路径
-
-```csharp showLineNumbers
-[WebApi(Method = HttpMethodType.Get)]
-public string GetPath(IWebApiCallContext callContext)
-{
-    var request = callContext.HttpContext.Request;
-    return $"URL: {request.URL}, RelativeURL: {request.RelativeURL}";
-}
-```
-
-## 四、响应设置
-
-### 4.1 设置响应头
-
-```csharp showLineNumbers
-[WebApi(Method = HttpMethodType.Get)]
-public string SetResponseHeader(IWebApiCallContext callContext)
+public async Task CustomResponse(IWebApiCallContext callContext)
 {
     var response = callContext.HttpContext.Response;
-    response.SetHeader("X-Custom-Header", "Value");
-    response.SetHeader("X-Timestamp", DateTime.Now.ToString());
     
-    return "Headers set successfully";
+    response.SetStatus(201, "Created");
+    response.SetContent("Resource created successfully");
+    
+    await response.AnswerAsync();
 }
 ```
 
-### 4.2 设置状态码
+### 4.2 设置响应头
 
-```csharp showLineNumbers
+```csharp
 [WebApi(Method = HttpMethodType.Get)]
-public string SetStatusCode(IWebApiCallContext callContext)
+public string SetHeaders(IWebApiCallContext callContext)
 {
-    callContext.HttpContext.Response.SetStatus(201, "Created");
-    return "Resource created";
+    var response = callContext.HttpContext.Response;
+    
+    response.SetHeader("X-Custom-Header", "CustomValue");
+    response.SetHeader("X-Timestamp", DateTime.Now.ToString());
+    
+    return "Headers set";
 }
 ```
 
 ### 4.3 设置 Content-Type
 
-```csharp showLineNumbers
+```csharp
 [WebApi(Method = HttpMethodType.Get)]
-public string SetContentType(IWebApiCallContext callContext)
+public string PlainText(IWebApiCallContext callContext)
 {
     callContext.HttpContext.Response.ContentType = "text/plain";
-    return "Plain text response";
+    return "This is plain text";
 }
 ```
 
-## 五、文件操作
+## 五、高级场景
 
-### 5.1 文件上传
-
-<BilibiliCard title="文件上传" link="https://www.bilibili.com/cheese/play/ep1688333" isPro="true"/>
-
-```csharp showLineNumbers
-[WebApi(Method = HttpMethodType.Post)]
-public async Task<string> UploadFile(IWebApiCallContext callContext)
-{
-    var request = callContext.HttpContext.Request;
-    
-    if (request.TryGetContent(out var content))
-    {
-        // 保存文件
-        var filePath = Path.Combine("uploads", "file.dat");
-        Directory.CreateDirectory("uploads");
-        
-        await File.WriteAllBytesAsync(filePath, content);
-        return $"File uploaded: {content.Length} bytes";
-    }
-    
-    return "No file content";
-}
-```
-
-### 5.2 多文件上传
-
-```csharp showLineNumbers
-[WebApi(Method = HttpMethodType.Post)]
-public async Task<string> UploadMultipleFiles(IWebApiCallContext callContext)
-{
-    var request = callContext.HttpContext.Request;
-    
-    if (request.TryGetContent(out var content))
-    {
-        using var multifileCollection = new MultifileCollection(content);
-        
-        var count = 0;
-        foreach (var multifile in multifileCollection)
-        {
-            var fileName = multifile.FileName;
-            var filePath = Path.Combine("uploads", fileName);
-            
-            Directory.CreateDirectory("uploads");
-            using var fs = File.Create(filePath);
-            await multifile.DataSection.WriteTo Async(fs);
-            
-            count++;
-        }
-        
-        return $"Uploaded {count} files";
-    }
-    
-    return "No files";
-}
-```
-
-### 5.3 文件下载
-
-<BilibiliCard title="文件下载" link="https://www.bilibili.com/cheese/play/ep1688334" isPro="true"/>
-
-```csharp showLineNumbers
-[WebApi(Method = HttpMethodType.Get)]
-public async Task DownloadFile(IWebApiCallContext callContext)
-{
-    var response = callContext.HttpContext.Response;
-    var filePath = "files/document.pdf";
-    
-    if (File.Exists(filePath))
-    {
-        response.SetStatus(200, "OK");
-        response.ContentType = "application/octet-stream";
-        response.SetHeader("Content-Disposition", "attachment; filename=document.pdf");
-        
-        var fileData = await File.ReadAllBytesAsync(filePath);
-        response.SetContent(fileData);
-        
-        await response.AnswerAsync();
-    }
-    else
-    {
-        response.SetStatus(404, "Not Found");
-        await response.AnswerAsync();
-    }
-}
-```
-
-## 六、WebSocket 升级
+### 5.1 WebSocket 升级
 
 可以将 HTTP 连接升级为 WebSocket：
 
-```csharp showLineNumbers
+```csharp
 [WebApi(Method = HttpMethodType.Get)]
 public async Task UpgradeToWebSocket(IWebApiCallContext callContext)
 {
@@ -274,70 +138,97 @@ public async Task UpgradeToWebSocket(IWebApiCallContext callContext)
 }
 ```
 
-## 七、完整示例
+### 7.2 流式响应
 
-```csharp showLineNumbers
-public partial class FileApiServer : SingletonRpcServer
+对于大型数据或实时数据，可以使用流式响应：
+
+```csharp
+[WebApi(Method = HttpMethodType.Get)]
+public async Task StreamResponse(IWebApiCallContext callContext)
 {
-    // 获取客户端信息
-    [WebApi(Method = HttpMethodType.Get)]
-    public string GetInfo(IWebApiCallContext callContext)
+    var response = callContext.HttpContext.Response;
+    
+    response.ContentType = "text/plain";
+    response.SetStatus(200, "OK");
+    
+    // 流式写入数据
+    for (int i = 0; i < 100; i++)
     {
-        var caller = callContext.Caller;
-        var request = callContext.HttpContext.Request;
-        
-        return new 
-        {
-            ClientIp = caller.IP,
-            ClientPort = caller.Port,
-            Method = request.Method,
-            Path = request.RelativeURL,
-            UserAgent = request.Headers["User-Agent"]
-        }.ToJsonString();
-    }
-
-    // 文件上传
-    [WebApi(Method = HttpMethodType.Post)]
-    public async Task<string> Upload(IWebApiCallContext callContext)
-    {
-        var request = callContext.HttpContext.Request;
-        var fileName = request.Query.Get("filename") ?? "upload.dat";
-        
-        if (request.TryGetContent(out var content))
-        {
-            var filePath = Path.Combine("uploads", fileName);
-            Directory.CreateDirectory("uploads");
-            
-            await File.WriteAllBytesAsync(filePath, content);
-            return $"Uploaded: {fileName} ({content.Length} bytes)";
-        }
-        
-        return "Upload failed";
-    }
-
-    // 文件下载
-    [WebApi(Method = HttpMethodType.Get)]
-    public async Task Download(IWebApiCallContext callContext, string filename)
-    {
-        var response = callContext.HttpContext.Response;
-        var filePath = Path.Combine("files", filename);
-        
-        if (File.Exists(filePath))
-        {
-            response.SetStatus(200, "OK");
-            response.ContentType = "application/octet-stream";
-            response.SetHeader("Content-Disposition", $"attachment; filename={filename}");
-            
-            var fileData = await File.ReadAllBytesAsync(filePath);
-            response.SetContent(fileData);
-        }
-        else
-        {
-            response.SetStatus(404, "Not Found");
-            response.SetContent("File not found");
-        }
-        
-        await response.AnswerAsync();
+        var data = $"Line {i}\n";
+        await response.WriteAsync(Encoding.UTF8.GetBytes(data));
+        await Task.Delay(100); // 模拟延迟
     }
 }
 ```
+
+## 八、常见场景示例
+
+### 8.1 获取客户端信息和请求详情
+
+```csharp
+[WebApi(Method = HttpMethodType.Get)]
+public object GetRequestInfo(IWebApiCallContext callContext)
+{
+    var caller = callContext.Caller;
+    var request = callContext.HttpContext.Request;
+    
+    return new 
+    {
+        ClientIp = caller.IP,
+        ClientPort = caller.Port,
+        ClientId = caller.Id,
+        Method = request.Method,
+        Url = request.URL,
+        RelativeUrl = request.RelativeURL,
+        UserAgent = request.Headers["User-Agent"],
+        ContentType = request.Headers["Content-Type"]
+    };
+}
+```
+
+### 8.2 条件响应
+
+根据条件返回不同的响应：
+
+```csharp
+[WebApi(Method = HttpMethodType.Get)]
+public async Task ConditionalResponse(IWebApiCallContext callContext, string type)
+{
+    var response = callContext.HttpContext.Response;
+    
+    if (type == "json")
+    {
+        response.ContentType = "application/json";
+        response.SetContent("{\"message\":\"Hello JSON\"}");
+    }
+    else if (type == "xml")
+    {
+        response.ContentType = "application/xml";
+        response.SetContent("<message>Hello XML</message>");
+    }
+    else
+    {
+        response.SetStatus(400, "Bad Request");
+        response.SetContent("Invalid type parameter");
+    }
+    
+    await response.AnswerAsync();
+}
+```
+
+## 九、注意事项
+
+### 9.1 响应写入时机
+
+- 如果方法有返回值，框架会自动序列化并写入响应
+- 如果使用 `Response.AnswerAsync()` 手动写入，方法应返回 `Task` 或 `void`
+
+### 9.2 异步操作
+
+- 文件操作、流操作建议使用异步方法（`async/await`）
+- 避免在 WebAPI 方法中执行长时间阻塞操作
+
+### 9.3 资源释放
+
+- 对于文件流、数据库连接等资源，确保正确释放
+- 使用 `using` 语句或 `try-finally` 块

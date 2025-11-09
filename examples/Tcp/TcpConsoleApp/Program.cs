@@ -20,47 +20,128 @@ using TouchSocket.Sockets;
 
 namespace ServiceConsoleApp;
 
-internal class Program
+internal class CloseException : Exception
 {
-    private static async Task Main(string[] args)
+    public CloseException(string msg) : base(msg)
     {
-        var consoleAction = new ConsoleAction();
-        consoleAction.Add("1", "以Received委托接收", RunClientForReceived);
-        consoleAction.Add("2", "以Ipv6的Received委托接收", RunClientForReceivedWithIpv6);
-        consoleAction.Add("3", "以ReadAsync异步阻塞接收", RunClientForReadAsync);
+    }
+}
 
-        var service = await CreateService();
+/// <summary>
+/// 应一个网友要求，该插件主要实现，在接收数据时如果触发<see cref="CloseException"/>异常，则断开连接。
+/// </summary>
+internal class ClosePlugin : PluginBase, ITcpReceivedPlugin
+{
+    private readonly ILog m_logger;
 
-        consoleAction.ShowAll();
-        await consoleAction.RunCommandLineAsync();
+    public ClosePlugin(ILog logger)
+    {
+        this.m_logger = logger;
     }
 
-    private static async Task<TcpService> CreateService()
+    public async Task OnTcpReceived(ITcpSession client, ReceivedDataEventArgs e)
     {
-        var service = new TcpService();
+        try
+        {
+            await e.InvokeNext();
+        }
+        catch (CloseException ex)
+        {
+            this.m_logger.Info("拦截到CloseException");
+            await client.CloseAsync(ex.Message);
+        }
+        catch (Exception)
+        {
+        }
+        finally
+        {
+        }
+    }
+}
+
+internal class MyPluginClass : PluginBase
+{
+    protected override void Loaded(IPluginManager pluginManager)
+    {
+        pluginManager.Add<ITcpSession, ReceivedDataEventArgs>(typeof(ITcpReceivedPlugin), this.OnTcpReceived);
+        base.Loaded(pluginManager);
+    }
+
+    private async Task OnTcpReceived(ITcpSession client, ReceivedDataEventArgs e)
+    {
+        await e.InvokeNext();
+    }
+}
+
+internal class MyServicePluginClass : PluginBase, IServerStartedPlugin, IServerStoppedPlugin
+{
+    public Task OnServerStarted(IServiceBase sender, ServiceStateEventArgs e)
+    {
+        if (sender is ITcpService service)
+        {
+            foreach (var item in service.Monitors)
+            {
+                ConsoleLogger.Default.Info($"iphost={item.Option.IpHost}");
+            }
+        }
+        if (e.ServerState == ServerState.Running)
+        {
+            ConsoleLogger.Default.Info($"服务器成功启动");
+        }
+        else
+        {
+            ConsoleLogger.Default.Info($"服务器启动失败，状态：{e.ServerState}，异常：{e.Exception}");
+        }
+        return e.InvokeNext();
+    }
+
+    public Task OnServerStopped(IServiceBase sender, ServiceStateEventArgs e)
+    {
+        Console.WriteLine("服务已停止");
+        return e.InvokeNext();
+    }
+}
+
+internal class Program
+{
+    private static async Task CreateCustomService()
+    {
+        #region 创建MyService服务器
+        var service = new MyService();
+        service.Connecting = (client, e) => { return EasyTask.CompletedTask; };//有客户端正在连接
+        service.Connected = (client, e) => { return EasyTask.CompletedTask; };//有客户端成功连接
+        service.Closing = (client, e) => { return EasyTask.CompletedTask; };//有客户端正在断开连接，只有当主动断开时才有效。
+        service.Closed = (client, e) => { return EasyTask.CompletedTask; };//有客户端断开连接
+
+        #region Tcp服务器使用Received异步委托接收数据并回应
+        service.Received = async (client, e) =>
+        {
+            //从客户端收到信息
+            var mes = e.Memory.Span.ToString(Encoding.UTF8);
+            client.Logger.Info($"已从{client.Id}接收到信息：{mes}");
+
+            //按字符发送给客户端
+            await client.SendAsync(mes);
+
+            //按字节数组发送给客户端
+            //await client.SendAsync(new byte[] { 0, 1, 2, 3, 4 });
+        };
+        #endregion
+
+
         await service.SetupAsync(new TouchSocketConfig()//载入配置
-             .SetListenIPHosts("tcp://127.0.0.1:7789", 7790, new IPHost(System.Net.IPAddress.IPv6Any, 7791))//同时监听多个地址
-             .ConfigureContainer(a =>//容器的配置顺序应该在最前面
+             .SetListenIPHosts("tcp://127.0.0.1:7789", 7790)//可以同时监听多个地址
+             .ConfigureContainer(a =>//容器的配置
              {
                  a.AddConsoleLogger();//添加一个控制台日志注入（注意：在maui中控制台日志不可用）
              })
              .ConfigurePlugins(a =>
              {
-                 a.UseTcpSessionCheckClear(options =>
-                 {
-                     options.CheckClearType = CheckClearType.All;
-                     options.Tick = TimeSpan.FromSeconds(60);
-                     options.OnClose = async (c, t) =>
-                     {
-                         await c.CloseAsync("超时无数据");
-                     };
-                 });
-                 a.Add<ClosePlugin>();
-                 a.Add<TcpServiceReceivedPlugin>();
-                 a.Add<MyServicePluginClass>();
+                 //a.Add();//此处可以添加插件
              }));
+
         await service.StartAsync();//启动
-        return service;
+        #endregion
     }
 
     private static async Task CreateDefaultService()
@@ -143,46 +224,6 @@ internal class Program
         #endregion
     }
 
-    private static async Task CreateCustomService()
-    {
-        #region 创建MyService服务器
-        var service = new MyService();
-        service.Connecting = (client, e) => { return EasyTask.CompletedTask; };//有客户端正在连接
-        service.Connected = (client, e) => { return EasyTask.CompletedTask; };//有客户端成功连接
-        service.Closing = (client, e) => { return EasyTask.CompletedTask; };//有客户端正在断开连接，只有当主动断开时才有效。
-        service.Closed = (client, e) => { return EasyTask.CompletedTask; };//有客户端断开连接
-
-        #region Tcp服务器使用Received异步委托接收数据并回应
-        service.Received = async (client, e) =>
-        {
-            //从客户端收到信息
-            var mes = e.Memory.Span.ToString(Encoding.UTF8);
-            client.Logger.Info($"已从{client.Id}接收到信息：{mes}");
-
-            //按字符发送给客户端
-            await client.SendAsync(mes);
-
-            //按字节数组发送给客户端
-            //await client.SendAsync(new byte[] { 0, 1, 2, 3, 4 });
-        };
-        #endregion
-
-
-        await service.SetupAsync(new TouchSocketConfig()//载入配置
-             .SetListenIPHosts("tcp://127.0.0.1:7789", 7790)//可以同时监听多个地址
-             .ConfigureContainer(a =>//容器的配置
-             {
-                 a.AddConsoleLogger();//添加一个控制台日志注入（注意：在maui中控制台日志不可用）
-             })
-             .ConfigurePlugins(a =>
-             {
-                 //a.Add();//此处可以添加插件
-             }));
-
-        await service.StartAsync();//启动
-        #endregion
-    }
-
     private static async Task CreateDefaultService2()
     {
         #region 动态添加移除监听配置 {5,17}
@@ -215,6 +256,164 @@ internal class Program
         {
             await sessionClient.ResetIdAsync("newId");
         }
+        #endregion
+    }
+
+    private static async Task CreateDefaultTcpClient()
+    {
+        #region 创建Tcp客户端
+        var tcpClient = new TcpClient();
+        tcpClient.Connecting = (client, e) => { return EasyTask.CompletedTask; };//即将连接到服务器，此时已经创建socket，但是还未建立tcp
+        tcpClient.Connected = (client, e) => { return EasyTask.CompletedTask; };//成功连接到服务器
+        tcpClient.Closing = (client, e) => { return EasyTask.CompletedTask; };//即将从服务器断开连接。此处仅主动断开才有效。
+        tcpClient.Closed = (client, e) => { return EasyTask.CompletedTask; };//从服务器断开连接，当连接不成功时不会触发。
+        #region Tcp客户端使用Received异步委托接收数据
+        tcpClient.Received = (client, e) =>
+        {
+            //从服务器收到信息。但是一般byteBlock和requestInfo会根据适配器呈现不同的值。
+            var mes = e.Memory.Span.ToString(Encoding.UTF8);
+            tcpClient.Logger.Info($"客户端接收到信息：{mes}");
+            return EasyTask.CompletedTask;
+        };
+        #endregion
+
+
+        //载入配置
+        #region Tcp客户端配置插件 {5}
+        await tcpClient.SetupAsync(new TouchSocketConfig()
+              .SetRemoteIPHost("tcp://127.0.0.1:7789")
+              .ConfigurePlugins(a =>
+              {
+                  a.Add<TcpClientReceivedPlugin>();
+              })
+              .ConfigureContainer(a =>
+              {
+                  a.AddConsoleLogger();//添加一个日志注入
+              }));
+        #endregion
+
+        await tcpClient.ConnectAsync();//调用连接，当连接不成功时，会抛出异常。
+        #endregion
+
+        #region Tcp客户端发送数据
+        //发送字符串数据
+        await tcpClient.SendAsync("hello");
+
+        //发送字节数组数据
+        await tcpClient.SendAsync(new byte[] { 0, 1, 2, 3, 4 });
+        #endregion
+
+    }
+
+    private static async Task CreateReconnection2TcpClient()
+    {
+        #region Tcp客户端启用轮询断线重连
+        var tcpClient = new TcpClient();
+
+        //载入配置
+        await tcpClient.SetupAsync(new TouchSocketConfig()
+              .SetRemoteIPHost("127.0.0.1:7789")
+              .ConfigurePlugins(a =>
+              {
+                  a.UseReconnection<TcpClient>(options =>
+                  {
+                      options.PollingInterval = TimeSpan.FromSeconds(1);
+                  });
+              }));
+
+        await tcpClient.ConnectAsync();//调用连接
+        #endregion
+    }
+
+    private static async Task CreateReconnectionTcpClient()
+    {
+        var client = new TcpClient();
+
+        //载入配置
+        await client.SetupAsync(new TouchSocketConfig()
+              .SetRemoteIPHost("127.0.0.1:7789")
+        #region Tcp客户端启用断线重连
+              .ConfigurePlugins(a =>
+              {
+                  a.UseReconnection<TcpClient>(options =>
+                  {
+                      options.PollingInterval = TimeSpan.FromSeconds(1);
+                  });
+              }));
+        #endregion
+        await client.ConnectAsync();//调用连接
+
+        #region Reconnection重连插件暂停重连
+        client.SetPauseReconnection(true);//暂停重连
+        await Task.Delay(5000);
+        client.SetPauseReconnection(false);//恢复重连
+        #endregion
+    }
+
+    private static async Task<TcpService> CreateService()
+    {
+        var service = new TcpService();
+        await service.SetupAsync(new TouchSocketConfig()//载入配置
+             .SetListenIPHosts("tcp://127.0.0.1:7789", 7790, new IPHost(System.Net.IPAddress.IPv6Any, 7791))//同时监听多个地址
+             .ConfigureContainer(a =>//容器的配置顺序应该在最前面
+             {
+                 a.AddConsoleLogger();//添加一个控制台日志注入（注意：在maui中控制台日志不可用）
+             })
+             .ConfigurePlugins(a =>
+             {
+                 a.UseTcpSessionCheckClear(options =>
+                 {
+                     options.CheckClearType = CheckClearType.All;
+                     options.Tick = TimeSpan.FromSeconds(60);
+                     options.OnClose = async (c, t) =>
+                     {
+                         await c.CloseAsync("超时无数据");
+                     };
+                 });
+                 a.Add<ClosePlugin>();
+                 a.Add<TcpServiceReceivedPlugin>();
+                 a.Add<MyServicePluginClass>();
+             }));
+        await service.StartAsync();//启动
+        return service;
+    }
+
+    private static void CreateTcpClientConfig()
+    {
+
+        var config = new TouchSocketConfig();
+        #region 设置远程服务器地址
+        config.SetRemoteIPHost("tcp://127.0.0.1:7789");
+        #endregion
+
+        #region 设置Tcp客户端Ssl加密
+        config.SetClientSslOption(options =>
+        {
+            options.CertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
+            options.CheckCertificateRevocation = false;
+            options.ClientCertificates = new X509Certificate2Collection() { new X509Certificate2("client.pfx", "pwd") };
+            options.SslProtocols = System.Security.Authentication.SslProtocols.None;
+            options.TargetHost = "127.0.0.1";
+        });
+        #endregion
+
+        #region 设置Tcp底层心跳
+        //此配置项仅在windows下有效。
+        //非必要请勿开启。
+        config.SetKeepAliveValue(options =>
+        {
+            options.AckInterval = 2000;
+            options.Interval = 20 * 1000;
+        });
+        #endregion
+
+        #region 设置客户端固定端口号
+        //不设置时，系统会自动分配端口
+        config.SetBindIPHost("127.0.0.1:8848");
+        #endregion
+
+        #region 设置客户端端口复用
+        config.SetReuseAddress(true);
         #endregion
     }
 
@@ -278,6 +477,60 @@ internal class Program
             options.Certificate = new X509Certificate2("key.pfx", "pwd");
         });
         #endregion
+    }
+
+    private static async Task Main(string[] args)
+    {
+        var consoleAction = new ConsoleAction();
+        consoleAction.Add("1", "以Received委托接收", RunClientForReceived);
+        consoleAction.Add("2", "以Ipv6的Received委托接收", RunClientForReceivedWithIpv6);
+        consoleAction.Add("3", "以ReadAsync异步阻塞接收", RunClientForReadAsync);
+
+        var service = await CreateService();
+
+        consoleAction.ShowAll();
+        await consoleAction.RunCommandLineAsync();
+    }
+    private static async Task RunClientForReadAsync()
+    {
+        #region Tcp客户端异步阻塞接收
+        var client = new TcpClient();
+        await client.ConnectAsync("tcp://127.0.0.1:7789");//连接
+
+        client.Logger.Info("客户端成功连接");
+
+        Console.WriteLine("输入任意内容，回车发送");
+        //receiver可以复用，不需要每次接收都新建
+        using (var receiver = client.CreateReceiver())
+        {
+            while (true)
+            {
+                //发送信息
+                await client.SendAsync(Console.ReadLine());
+
+                //设置接收超时
+                using (var cts = new CancellationTokenSource(1000 * 60))
+                {
+                    //receiverResult必须释放
+                    using (var receiverResult = await receiver.ReadAsync(cts.Token))
+                    {
+                        if (receiverResult.IsCompleted)
+                        {
+                            //断开连接了
+                        }
+
+                        //从服务器收到信息。
+                        var mes = receiverResult.Memory.Span.ToString(Encoding.UTF8);
+                        client.Logger.Info($"客户端接收到信息：{mes}");
+
+                        //如果是适配器信息，则可以直接获取receiverResult.RequestInfo;
+                    }
+                }
+
+            }
+        }
+        #endregion
+
     }
 
     /// <summary>
@@ -354,176 +607,6 @@ internal class Program
             await client.SendAsync(Console.ReadLine());
         }
     }
-
-    private static async Task CreateReconnectionTcpClient()
-    {
-        var client = new TcpClient();
-
-        //载入配置
-        await client.SetupAsync(new TouchSocketConfig()
-              .SetRemoteIPHost("127.0.0.1:7789")
-        #region Tcp客户端启用断线重连
-              .ConfigurePlugins(a =>
-              {
-                  a.UseReconnection<TcpClient>(options =>
-                  {
-                      options.PollingInterval = TimeSpan.FromSeconds(1);
-                  });
-              }));
-        #endregion
-        await client.ConnectAsync();//调用连接
-
-        #region Reconnection重连插件暂停重连
-        client.SetPauseReconnection(true);//暂停重连
-        await Task.Delay(5000);
-        client.SetPauseReconnection(false);//恢复重连
-        #endregion
-    }
-
-    private static async Task CreateReconnection2TcpClient()
-    {
-        #region Tcp客户端启用轮询断线重连
-        var tcpClient = new TcpClient();
-
-        //载入配置
-        await tcpClient.SetupAsync(new TouchSocketConfig()
-              .SetRemoteIPHost("127.0.0.1:7789")
-              .ConfigurePlugins(a =>
-              {
-                  a.UseReconnection<TcpClient>(options =>
-                  {
-                      options.PollingInterval = TimeSpan.FromSeconds(1);
-                  });
-              }));
-
-        await tcpClient.ConnectAsync();//调用连接
-        #endregion
-    }
-    private static async Task CreateDefaultTcpClient()
-    {
-        #region 创建Tcp客户端
-        var tcpClient = new TcpClient();
-        tcpClient.Connecting = (client, e) => { return EasyTask.CompletedTask; };//即将连接到服务器，此时已经创建socket，但是还未建立tcp
-        tcpClient.Connected = (client, e) => { return EasyTask.CompletedTask; };//成功连接到服务器
-        tcpClient.Closing = (client, e) => { return EasyTask.CompletedTask; };//即将从服务器断开连接。此处仅主动断开才有效。
-        tcpClient.Closed = (client, e) => { return EasyTask.CompletedTask; };//从服务器断开连接，当连接不成功时不会触发。
-        #region Tcp客户端使用Received异步委托接收数据
-        tcpClient.Received = (client, e) =>
-        {
-            //从服务器收到信息。但是一般byteBlock和requestInfo会根据适配器呈现不同的值。
-            var mes = e.Memory.Span.ToString(Encoding.UTF8);
-            tcpClient.Logger.Info($"客户端接收到信息：{mes}");
-            return EasyTask.CompletedTask;
-        };
-        #endregion
-
-
-        //载入配置
-        #region Tcp客户端配置插件 {5}
-        await tcpClient.SetupAsync(new TouchSocketConfig()
-              .SetRemoteIPHost("tcp://127.0.0.1:7789")
-              .ConfigurePlugins(a =>
-              {
-                  a.Add<TcpClientReceivedPlugin>();
-              })
-              .ConfigureContainer(a =>
-              {
-                  a.AddConsoleLogger();//添加一个日志注入
-              }));
-        #endregion
-
-        await tcpClient.ConnectAsync();//调用连接，当连接不成功时，会抛出异常。
-        #endregion
-
-        #region Tcp客户端发送数据
-        //发送字符串数据
-        await tcpClient.SendAsync("hello");
-
-        //发送字节数组数据
-        await tcpClient.SendAsync(new byte[] { 0, 1, 2, 3, 4 });
-        #endregion
-
-    }
-    private static void CreateTcpClientConfig()
-    {
-
-        var config = new TouchSocketConfig();
-        #region 设置远程服务器地址
-        config.SetRemoteIPHost("tcp://127.0.0.1:7789");
-        #endregion
-
-        #region 设置Tcp客户端Ssl加密
-        config.SetClientSslOption(options =>
-        {
-            options.CertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
-            options.CheckCertificateRevocation = false;
-            options.ClientCertificates = new X509Certificate2Collection() { new X509Certificate2("client.pfx", "pwd") };
-            options.SslProtocols = System.Security.Authentication.SslProtocols.None;
-            options.TargetHost = "127.0.0.1";
-        });
-        #endregion
-
-        #region 设置Tcp底层心跳
-        //此配置项仅在windows下有效。
-        //非必要请勿开启。
-        config.SetKeepAliveValue(options =>
-        {
-            options.AckInterval = 2000;
-            options.Interval = 20 * 1000;
-        });
-        #endregion
-
-        #region 设置客户端固定端口号
-        //不设置时，系统会自动分配端口
-        config.SetBindIPHost("127.0.0.1:8848");
-        #endregion
-
-        #region 设置客户端端口复用
-        config.SetReuseAddress(true);
-        #endregion
-    }
-
-    private static async Task RunClientForReadAsync()
-    {
-        #region Tcp客户端异步阻塞接收
-        var client = new TcpClient();
-        await client.ConnectAsync("tcp://127.0.0.1:7789");//连接
-
-        client.Logger.Info("客户端成功连接");
-
-        Console.WriteLine("输入任意内容，回车发送");
-        //receiver可以复用，不需要每次接收都新建
-        using (var receiver = client.CreateReceiver())
-        {
-            while (true)
-            {
-                //发送信息
-                await client.SendAsync(Console.ReadLine());
-
-                //设置接收超时
-                using (var cts = new CancellationTokenSource(1000 * 60))
-                {
-                    //receiverResult必须释放
-                    using (var receiverResult = await receiver.ReadAsync(cts.Token))
-                    {
-                        if (receiverResult.IsCompleted)
-                        {
-                            //断开连接了
-                        }
-
-                        //从服务器收到信息。
-                        var mes = receiverResult.Memory.Span.ToString(Encoding.UTF8);
-                        client.Logger.Info($"客户端接收到信息：{mes}");
-
-                        //如果是适配器信息，则可以直接获取receiverResult.RequestInfo;
-                    }
-                }
-
-            }
-        }
-        #endregion
-
-    }
 }
 
 #region 从继承创建Tcp客户端
@@ -542,50 +625,6 @@ internal class MyTcpClient : TcpClientBase
 }
 
 #endregion
-
-internal class MyPluginClass : PluginBase
-{
-    protected override void Loaded(IPluginManager pluginManager)
-    {
-        pluginManager.Add<ITcpSession, ReceivedDataEventArgs>(typeof(ITcpReceivedPlugin), this.OnTcpReceived);
-        base.Loaded(pluginManager);
-    }
-
-    private async Task OnTcpReceived(ITcpSession client, ReceivedDataEventArgs e)
-    {
-        await e.InvokeNext();
-    }
-}
-
-internal class MyServicePluginClass : PluginBase, IServerStartedPlugin, IServerStoppedPlugin
-{
-    public Task OnServerStarted(IServiceBase sender, ServiceStateEventArgs e)
-    {
-        if (sender is ITcpService service)
-        {
-            foreach (var item in service.Monitors)
-            {
-                ConsoleLogger.Default.Info($"iphost={item.Option.IpHost}");
-            }
-        }
-        if (e.ServerState == ServerState.Running)
-        {
-            ConsoleLogger.Default.Info($"服务器成功启动");
-        }
-        else
-        {
-            ConsoleLogger.Default.Info($"服务器启动失败，状态：{e.ServerState}，异常：{e.Exception}");
-        }
-        return e.InvokeNext();
-    }
-
-    public Task OnServerStopped(IServiceBase sender, ServiceStateEventArgs e)
-    {
-        Console.WriteLine("服务已停止");
-        return e.InvokeNext();
-    }
-}
-
 #region Tcp服务器异步阻塞接收
 internal class TcpServiceReceiveAsyncPlugin : PluginBase, ITcpConnectedPlugin
 {
@@ -660,46 +699,6 @@ internal class TcpClientReceivedPlugin : PluginBase, ITcpReceivedPlugin
     }
 }
 #endregion
-
-/// <summary>
-/// 应一个网友要求，该插件主要实现，在接收数据时如果触发<see cref="CloseException"/>异常，则断开连接。
-/// </summary>
-internal class ClosePlugin : PluginBase, ITcpReceivedPlugin
-{
-    private readonly ILog m_logger;
-
-    public ClosePlugin(ILog logger)
-    {
-        this.m_logger = logger;
-    }
-
-    public async Task OnTcpReceived(ITcpSession client, ReceivedDataEventArgs e)
-    {
-        try
-        {
-            await e.InvokeNext();
-        }
-        catch (CloseException ex)
-        {
-            this.m_logger.Info("拦截到CloseException");
-            await client.CloseAsync(ex.Message);
-        }
-        catch (Exception)
-        {
-        }
-        finally
-        {
-        }
-    }
-}
-
-internal class CloseException : Exception
-{
-    public CloseException(string msg) : base(msg)
-    {
-    }
-}
-
 #region Tcp服务器连接时以IPPort作为Id
 internal class InitIdPluginWithIpPort : PluginBase, ITcpConnectingPlugin
 {

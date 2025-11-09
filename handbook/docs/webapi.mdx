@@ -14,51 +14,81 @@ import CustomCodeBlock from './CodeBlocks/CustomCodeBlock';
 
 ## 一、说明
 
-TouchSocket.WebApi 是一款高性能、轻量级的 WebAPI 框架，提供类似于 ASP.NET Core 的开发体验，同时具有更高的性能表现。
+TouchSocket.WebApi 是一款高性能、轻量级的 WebAPI 框架,提供类似于 ASP.NET Core 的开发体验,同时具有更高的性能表现。它支持多种调用方式,包括浏览器访问、HttpClient 调用、代理生成等,是构建高性能 Web API 服务的理想选择。
 
 <BilibiliCard title="WebApi快速入门" link="https://www.bilibili.com/cheese/play/ep1688286" isPro="true"/>
 
 ## 二、核心特性
 
- **高性能**：性能优于传统HTTP框架  
- **轻量级**：最小化依赖，快速启动  
- **简单易用**：类似ASP.NET Core的API设计  
- **灵活路由**：支持特性路由、默认路由、正则路由  
- **多种调用方式**：浏览器、HttpClient、代理生成等  
- **完整功能**：支持鉴权、跨域、文件上传下载等  
- **AOT支持**：完整支持Native AOT编译  
+- **高性能**  
+  性能优于传统 HTTP 框架,采用高效的请求处理机制
 
-## 三、创建 WebAPI 服务
+- **轻量级**  
+  最小化依赖,快速启动,资源占用少
 
-### 3.1 定义 WebAPI 服务类
+- **简单易用**  
+  类似 ASP.NET Core 的 API 设计,降低学习成本
 
-创建一个服务类，继承自 `SingletonRpcServer`（单例服务）、`ScopedRpcServer`（作用域服务）或 `TransientRpcServer`（瞬态服务），然后在方法上添加 `[WebApi]` 特性。
+- **灵活路由**  
+  支持特性路由、默认路由、正则路由等多种路由方式
+
+- **多种调用方式**  
+  支持浏览器、HttpClient、代理生成等多种调用方式
+
+- **完整功能**  
+  内置鉴权、跨域、文件上传下载等常用功能
+
+- **AOT 支持**  
+  完整支持 Native AOT 编译,进一步提升性能
+
+- **Swagger 集成**  
+  内置 Swagger 支持,自动生成 API 文档
+
+## 三、快速开始
+
+### 3.1 安装 NuGet 包
+
+```bash
+Install-Package TouchSocket.WebApi
+```
+
+### 3.2 定义 WebAPI 服务类
+
+创建一个服务类,继承自 `SingletonRpcServer`、`ScopedRpcServer` 或 `TransientRpcServer`,然后在方法上添加 `[WebApi]` 特性。
 
 <BilibiliCard title="创建WebApi服务器" link="https://www.bilibili.com/cheese/play/ep1688287" isPro="true"/>
 
 <CustomCodeBlock region="定义WebApi服务"/>
 
-**服务生命周期说明：**
+**服务生命周期说明:**
 
-- **SingletonRpcServer**：单例服务，整个应用程序生命周期内只创建一个实例
-- **ScopedRpcServer**：作用域服务，每个链接的请求创建一个新实例（⚠️注意：此处的scope划分和asp.net中的scope不同）
-- **TransientRpcServer**：瞬态服务，每次调用都创建一个新实例
+- **SingletonRpcServer** - 单例服务,整个应用程序生命周期内只创建一个实例
+- **ScopedRpcServer** - 作用域服务,每个连接的请求创建一个新实例(⚠️注意:此处的 scope 划分和 ASP.NET 中的 scope 不同)
+- **TransientRpcServer** - 瞬态服务,每次调用都创建一个新实例
 
 <BilibiliCard title="WebApi三种生命周期服务详解" link="https://www.bilibili.com/cheese/play/ep1709016" isPro="true"/>
 
-### 3.2 启动 WebAPI 服务器
+### 3.3 启动 WebAPI 服务器
 
 <CustomCodeBlock region="启动WebApi服务器"/>
 
-**配置说明：**
+**配置说明:**
 
-- `SetListenIPHosts(7789)`：设置监听端口
-- `AddConsoleLogger()`：添加控制台日志
-- `AddRpcStore()`：配置 RPC 存储，用于注册服务
-- `RegisterServer<T>()`：注册服务类
-- `UseWebApi()`：启用 WebAPI 插件
-- `UseDefaultHttpServicePlugin()`：添加默认HTTP插件，处理404等情况
+- `SetListenIPHosts(7789)` - 设置监听端口
+- `AddConsoleLogger()` - 添加控制台日志
+- `AddRpcStore()` - 配置 RPC 存储,用于注册服务
+- `RegisterServer<T>()` - 注册服务类
+- `UseWebApi()` - 启用 WebAPI 插件
+- `UseDefaultHttpServicePlugin()` - 添加默认 HTTP 插件,处理 404 等情况
 
 <BilibiliCard title="初步搭建WebApi服务" link="https://www.bilibili.com/cheese/play/ep1688288" isPro="true"/>
 <BilibiliCard title="使用接口或实例类直接注册服务" link="https://www.bilibili.com/cheese/play/ep1709015" isPro="true"/>
 <BilibiliCard title="使用反射和源生成器注册所有服务" link="https://www.bilibili.com/cheese/play/ep1709017" isPro="true"/>
+
+### 3.4 访问 API
+
+服务启动后,可以通过浏览器或其他 HTTP 客户端访问:
+
+```
+http://127.0.0.1:7789/DemoApiServer/Sum?a=10&b=20
+```

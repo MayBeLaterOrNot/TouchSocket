@@ -12,6 +12,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using TouchSocket.Core;
 using TouchSocket.Http;
@@ -31,8 +32,8 @@ public partial class ApiServer : SingletonRpcServer
         this.m_logger = logger;
     }
 
+    #region 多路由配置
 
-    #region Router路由
     [Router("[api]/[action]ab")]//此路由会以"/ApiServer/Sumab"实现
     [Router("[api]/[action]")]//此路由会以"/ApiServer/Sum"实现
     [WebApi(Method = HttpMethodType.Get)]
@@ -40,12 +41,44 @@ public partial class ApiServer : SingletonRpcServer
     {
         return a + b;
     }
-    #endregion
 
+    #endregion 多路由配置
 
-    [EnableCors("cors")]//使用跨域
+    #region 自定义路由路径
+
+    [Router("/api/custom/calculate")]
     [WebApi(Method = HttpMethodType.Get)]
-    public int SumCallContext(IWebApiCallContext callContext, int a, int b)
+    public int Calculate(int x, int y)
+    {
+        return x * y;
+    }
+
+    #endregion 自定义路由路径
+
+    #region 类级别路由
+
+    // 注意：此示例展示类级别路由的概念
+    // 实际使用时应在类声明上添加 [Router] 特性
+
+    #endregion 类级别路由
+
+    #region 正则路由示例
+
+    [RegexRouter(@"^/products/\d+$")]
+    [WebApi(Method = HttpMethodType.Get)]
+    public string GetProductById(IWebApiCallContext callContext)
+    {
+        var url = callContext.HttpContext.Request.RelativeURL;
+        var id = url.Split('/').Last();
+        return $"Product ID: {id}";
+    }
+
+    #endregion 正则路由示例
+
+    #region 使用调用上下文
+
+    [WebApi(Method = HttpMethodType.Get)]
+    public int GetCallContext(IWebApiCallContext callContext, int a, int b)
     {
         if (callContext.Caller is IHttpSessionClient httpSessionClient)
         {
@@ -64,6 +97,10 @@ public partial class ApiServer : SingletonRpcServer
         return a + b;
     }
 
+    #endregion 使用调用上下文
+
+    #region 返回对象
+
     [WebApi(Method = HttpMethodType.Get)]
     public MyClass GetMyClass()
     {
@@ -74,14 +111,63 @@ public partial class ApiServer : SingletonRpcServer
         };
     }
 
+    #endregion 返回对象
+
+    #region Post传参
+
     [WebApi(Method = HttpMethodType.Post)]
     public int TestPost(MyClass myClass)
     {
         return myClass.A + myClass.B;
     }
 
+    #endregion Post传参
+
+    #region FromQuery传参
+
+    [WebApi(Method = HttpMethodType.Get)]
+    public int SumFromQuery([FromQuery(Name = "aa")] int a, [FromQuery] int b)
+    {
+        return a + b;
+    }
+
+    #endregion FromQuery传参
+
+    #region FromForm传参
+
+    [WebApi(Method = HttpMethodType.Get)]
+    public int SumFromForm([FromForm] int a, [FromForm] int b)
+    {
+        return a + b;
+    }
+
+    #endregion FromForm传参
+
+    #region FromHeader传参
+
+    [WebApi(Method = HttpMethodType.Get)]
+    public int SumFromHeader([FromHeader] int a, [FromHeader] int b)
+    {
+        return a + b;
+    }
+
+    #endregion FromHeader传参
+
+    #region 启用跨域
+
+    [EnableCors("cors")]//使用跨域
+    [WebApi(Method = HttpMethodType.Get)]
+    public int SumCallContext(IWebApiCallContext callContext, int a, int b)
+    {
+        return a + b;
+    }
+
+    #endregion 启用跨域
+
+    #region 文件下载
+
     /// <summary>
-    /// 使用调用上下文，响应文件下载。
+    /// 使用调用上下文,响应文件下载。
     /// </summary>
     /// <param name="callContext"></param>
     [WebApi(Method = HttpMethodType.Get)]
@@ -94,6 +180,10 @@ public partial class ApiServer : SingletonRpcServer
         }
         return "id不正确。";
     }
+
+    #endregion 文件下载
+
+    #region 获取请求体
 
     /// <summary>
     /// 使用调用上下文，获取实际请求体。
@@ -114,8 +204,12 @@ public partial class ApiServer : SingletonRpcServer
         return "ok";
     }
 
+    #endregion 获取请求体
+
+    #region 上传多个小文件
+
     /// <summary>
-    /// 使用调用上下文，上传多个小文件。
+    /// 使用调用上下文,上传多个小文件。
     /// </summary>
     /// <param name="callContext"></param>
     [WebApi(Method = HttpMethodType.Post)]
@@ -135,6 +229,10 @@ public partial class ApiServer : SingletonRpcServer
         return "ok";
     }
 
+    #endregion 上传多个小文件
+
+    #region 上传大文件
+
     /// <summary>
     /// 使用调用上下文，上传大文件。
     /// </summary>
@@ -150,30 +248,5 @@ public partial class ApiServer : SingletonRpcServer
         return "ok";
     }
 
-    [WebApi(Method = HttpMethodType.Get)]
-    public string GetString()
-    {
-        Console.WriteLine("GetString");
-        return "hello";
-    }
-
-    [WebApi(Method = HttpMethodType.Get)]
-    public int SumFromForm([FromForm] int a, [FromForm] int b)
-    {
-        return a + b;
-    }
-
-    [WebApi(Method = HttpMethodType.Get)]
-    public int SumFromQuery([FromQuery(Name = "aa")] int a, [FromQuery] int b)
-    {
-        return a + b;
-    }
-
-    [WebApi(Method = HttpMethodType.Get)]
-    public int SumFromHeader([FromHeader] int a, [FromHeader] int b)
-    {
-        return a + b;
-    }
+    #endregion 上传大文件
 }
-
-

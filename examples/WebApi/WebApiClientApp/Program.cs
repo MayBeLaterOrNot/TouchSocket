@@ -35,6 +35,7 @@ internal class Program
             FeedbackType = FeedbackType.WaitInvoke
         };
 
+        #region WebApiClient调用
         {
             var client = await CreateWebApiClient();
 
@@ -56,7 +57,9 @@ internal class Program
             var sum3 = await client.TestPostAsync(new MyClass() { A = 10, B = 20 }, invokeOption_30s);
             Console.WriteLine($"代理调用成功，结果：{sum3}");
         }
+        #endregion
 
+        #region WebApiClientSlim调用
         {
             var client = await CreateWebApiClientSlim();
 
@@ -69,6 +72,7 @@ internal class Program
             var sum3 = client.TestPostAsync(new MyClass() { A = 10, B = 20 }, invokeOption_30s);
             Console.WriteLine($"代理调用成功，结果：{sum3}");
         }
+        #endregion
 
         Console.ReadKey();
     }
@@ -84,6 +88,7 @@ internal class Program
         return client;
     }
 
+    #region 创建WebApiClient
     private static async Task<WebApiClient> CreateWebApiClient()
     {
         using var client = new WebApiClient();
@@ -97,7 +102,9 @@ internal class Program
         Console.WriteLine("连接成功");
         return client;
     }
+    #endregion
 
+    #region 创建WebApiClientSlim
     private static async Task<WebApiClientSlim> CreateWebApiClientSlim()
     {
         using var client = new WebApiClientSlim(new System.Net.Http.HttpClient());
@@ -110,6 +117,7 @@ internal class Program
 
         return client;
     }
+    #endregion
 
     /// <summary>
     /// 此处可以做WebApi的请求之前和之后的拦截。

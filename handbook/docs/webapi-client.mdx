@@ -4,6 +4,7 @@ title: WebAPI 客户端调用
 ---
 
 import BilibiliCard from '@site/src/components/BilibiliCard.js';
+import CustomCodeBlock from './CodeBlocks/CustomCodeBlock';
 
 ## 一、客户端调用方式
 
@@ -39,13 +40,11 @@ fetch('http://localhost:7789/apiserver/create', {
   .then(data => console.log(data));
 ```
 
-## 三、使用 HttpClient
-
-使用标准的 `HttpClient`：
+## 三、使用标准 HttpClient
 
 ### 3.1 GET 请求
 
-```csharp showLineNumbers
+```csharp
 using var httpClient = new HttpClient();
 var result = await httpClient.GetStringAsync("http://localhost:7789/apiserver/sum?a=10&b=20");
 Console.WriteLine(result); // 输出: 30
@@ -53,7 +52,7 @@ Console.WriteLine(result); // 输出: 30
 
 ### 3.2 POST 请求
 
-```csharp showLineNumbers
+```csharp
 using var httpClient = new HttpClient();
 var content = new StringContent(
     JsonConvert.SerializeObject(new { name = "Alice", age = 25 }),
@@ -65,53 +64,48 @@ var result = await response.Content.ReadAsStringAsync();
 Console.WriteLine(result);
 ```
 
-## 四、使用 WebApiClient
+## 四、使用 TouchSocket WebApiClient
 
-TouchSocket 提供的 `WebApiClient` 简化了调用：
+TouchSocket 提供的 `WebApiClient` 简化了调用，支持更多功能。
 
-### 4.1 基础使用
+### 4.1 创建 WebApiClient
 
-```csharp showLineNumbers
-var client = new HttpClient();
-var webApiClient = new WebApiClient(client);
+<CustomCodeBlock region="创建WebApiClient"/>
 
-// GET 请求
-var result = await webApiClient.InvokeAsync<int>("http://localhost:7789/apiserver/sum?a=10&b=20");
-Console.WriteLine(result); // 输出: 30
+### 4.2 调用示例
 
-// POST 请求
-var user = new UserDto { Name = "Alice", Age = 25 };
-var createResult = await webApiClient.InvokeAsync<string>(
-    "http://localhost:7789/apiserver/create",
-    HttpMethod.Post,
-    user);
-```
+<CustomCodeBlock region="WebApiClient调用"/>
 
-### 4.2 带参数的调用
+**说明**：
+- `WebApiRequest` 用于构建请求
+- `Method` 设置 HTTP 方法
+- `Querys` 设置查询参数
+- `Body` 设置请求体
+- `InvokeTAsync<T>` 返回强类型结果
 
-```csharp showLineNumbers
-var client = new HttpClient();
-var webApiClient = new WebApiClient(client);
+## 五、使用 WebApiClientSlim
 
-var parameters = new Dictionary<string, object>
-{
-    { "a", 10 },
-    { "b", 20 }
-};
+`WebApiClientSlim` 是基于 `System.Net.Http.HttpClient` 的轻量级客户端。
 
-var result = await webApiClient.InvokeAsync<int>(
-    "http://localhost:7789/apiserver/sum",
-    HttpMethod.Get,
-    parameters);
-```
+### 5.1 创建 WebApiClientSlim
 
-## 五、使用 DispatchProxy 代理
+<CustomCodeBlock region="创建WebApiClientSlim"/>
 
-使用代理可以像调用本地方法一样调用远程 API：
+### 5.2 调用特点
 
-### 5.1 定义接口
+- 使用标准的 `System.Net.Http.HttpClient`
+- 支持字符串模板调用：`GET:/ApiServer/Sum?a={0}&b={1}`
+- 更轻量，适合简单场景
 
-```csharp showLineNumbers
+## 六、使用 DispatchProxy 代理
+
+使用代理可以像调用本地方法一样调用远程 API。
+
+<BilibiliCard title="代码生成" link="https://www.bilibili.com/cheese/play/ep1688336" isPro="true"/>
+
+### 6.1 定义接口
+
+```csharp
 public interface IApiServer
 {
     [WebApi(Method = HttpMethodType.Get)]
@@ -122,9 +116,9 @@ public interface IApiServer
 }
 ```
 
-### 5.2 创建代理
+### 6.2 创建代理
 
-```csharp showLineNumbers
+```csharp
 var client = new HttpClient();
 client.BaseAddress = new Uri("http://localhost:7789");
 
@@ -138,23 +132,36 @@ var user = new UserDto { Name = "Alice", Age = 25 };
 var createResult = await proxy.CreateUser(user);
 ```
 
-## 六、代码生成
+## 七、代码生成
 
-TouchSocket 支持通过源生成器自动生成客户端代理代码。
+TouchSocket 支持通过源生成器或代码生成自动生成客户端代理。
 
-<BilibiliCard title="代码生成" link="https://www.bilibili.com/cheese/play/ep1688336" isPro="true"/>
+### 7.1 服务端代码生成
 
-### 6.1 安装源生成器
+在服务端注册服务时生成客户端代理代码：
 
-```bash
-Install-Package TouchSocket.WebApi.SourceGenerator
+```csharp
+a.AddRpcStore(store =>
+{
+    store.RegisterServer<ApiServer>();
+
+#if DEBUG
+    // 生成客户端调用代码
+    var codeString = store.GetProxyCodes("WebApiProxy", typeof(WebApiAttribute));
+    File.WriteAllText("../../../WebApiProxy.cs", codeString);
+#endif
+});
 ```
 
-### 6.2 生成代理
+### 7.2 使用生成的代理
 
-在服务器端标记需要生成代理的类：
+生成的代理代码包含了所有 WebAPI 方法的客户端接口，可以直接使用。
 
-```csharp showLineNumbers
+### 7.3 源生成器
+
+使用源生成器在编译时生成代理：
+
+```csharp
 [GenerateWebApiProxy]
 public partial class ApiServer : SingletonRpcServer
 {
@@ -166,22 +173,57 @@ public partial class ApiServer : SingletonRpcServer
 }
 ```
 
-### 6.3 使用生成的代理
+生成的接口可以直接用于创建代理。
 
-```csharp showLineNumbers
-// 生成的代理接口：IApiServerClient
-var client = new HttpClient();
-client.BaseAddress = new Uri("http://localhost:7789");
+## 八、客户端插件
 
-var apiClient = client.GetWebApiDispatchProxy<IApiServerClient>();
-var result = await apiClient.Sum(10, 20);
+### 8.1 请求拦截
+
+可以在发送请求前后进行拦截处理：
+
+```csharp
+private class MyWebApiPlugin : PluginBase, IWebApiRequestPlugin, IWebApiResponsePlugin
+{
+    public async Task OnWebApiRequest(IWebApiClientBase client, WebApiEventArgs e)
+    {
+        if (e.IsHttpMessage)
+        {
+            // 使用 System.Net.Http.HttpClient 时
+            e.RequestMessage.Headers.Add("Token", "123456");
+        }
+        else
+        {
+            // 使用 TouchSocket HttpClient 时
+            e.Request.Headers.Add("Token", "123456");
+        }
+        
+        await e.InvokeNext();
+    }
+
+    public async Task OnWebApiResponse(IWebApiClientBase client, WebApiEventArgs e)
+    {
+        // 处理响应
+        await e.InvokeNext();
+    }
+}
 ```
 
-## 七、完整示例
+### 8.2 使用插件
 
-### 7.1 服务器端
+```csharp
+await client.SetupAsync(new TouchSocketConfig()
+    .SetRemoteIPHost("127.0.0.1:7789")
+    .ConfigurePlugins(a =>
+    {
+        a.Add<MyWebApiPlugin>();
+    }));
+```
 
-```csharp showLineNumbers
+## 九、完整示例
+
+### 9.1 服务器端
+
+```csharp
 [GenerateWebApiProxy]
 public partial class UserApiServer : SingletonRpcServer
 {
@@ -206,18 +248,6 @@ public partial class UserApiServer : SingletonRpcServer
     {
         return $"Created user: {user.Name}";
     }
-
-    [WebApi(Method = HttpMethodType.Put)]
-    public string UpdateUser(int id, [FromBody] UserDto user)
-    {
-        return $"Updated user {id}: {user.Name}";
-    }
-
-    [WebApi(Method = HttpMethodType.Delete)]
-    public string DeleteUser(int id)
-    {
-        return $"Deleted user {id}";
-    }
 }
 
 public class UserDto
@@ -228,44 +258,46 @@ public class UserDto
 }
 ```
 
-### 7.2 客户端调用
+### 9.2 客户端调用（方式一：HttpClient）
 
-```csharp showLineNumbers
-// 方式1：使用 HttpClient
+```csharp
 using var httpClient = new HttpClient();
 var json = await httpClient.GetStringAsync("http://localhost:7789/userapiserver/getusers");
 var users = JsonConvert.DeserializeObject<List<UserDto>>(json);
+```
 
-// 方式2：使用 WebApiClient
-var client = new HttpClient();
-var webApiClient = new WebApiClient(client);
-var user = await webApiClient.InvokeAsync<UserDto>(
-    "http://localhost:7789/userapiserver/getuserbyid?id=1");
+### 9.3 客户端调用（方式二：WebApiClient）
 
-// 方式3：使用代理（推荐）
-var proxyClient = new HttpClient();
-proxyClient.BaseAddress = new Uri("http://localhost:7789");
-var proxy = proxyClient.GetWebApiDispatchProxy<IUserApiServerClient>();
+```csharp
+var client = new WebApiClient();
+await client.SetupAsync(new TouchSocketConfig()
+    .SetRemoteIPHost("127.0.0.1:7789"));
+await client.ConnectAsync();
+
+var request = new WebApiRequest();
+request.Method = HttpMethodType.Get;
+
+var users = await client.InvokeTAsync<List<UserDto>>("/userapiserver/getusers", null, request);
+```
+
+### 9.4 客户端调用（方式三：DispatchProxy）
+
+```csharp
+var httpClient = new HttpClient();
+httpClient.BaseAddress = new Uri("http://localhost:7789");
+
+var proxy = httpClient.GetWebApiDispatchProxy<IUserApiServerClient>();
 
 var allUsers = await proxy.GetUsers();
 var specificUser = await proxy.GetUserById(1);
 var createResult = await proxy.CreateUser(new UserDto { Name = "Charlie", Age = 35 });
-var updateResult = await proxy.UpdateUser(1, new UserDto { Name = "Alice Updated", Age = 26 });
-var deleteResult = await proxy.DeleteUser(1);
 ```
 
-## 八、最佳实践
+## 十、最佳实践
 
-### 8.1 复用 HttpClient
+### 10.1 复用 HttpClient
 
-```csharp showLineNumbers
-// 不推荐：每次创建新实例
-using var client1 = new HttpClient();
-var result1 = await client1.GetStringAsync("...");
-
-using var client2 = new HttpClient();
-var result2 = await client2.GetStringAsync("...");
-
+```csharp
 // 推荐：复用实例
 private static readonly HttpClient _sharedClient = new HttpClient();
 
@@ -273,16 +305,16 @@ var result1 = await _sharedClient.GetStringAsync("...");
 var result2 = await _sharedClient.GetStringAsync("...");
 ```
 
-### 8.2 设置超时
+### 10.2 设置超时
 
-```csharp showLineNumbers
+```csharp
 var client = new HttpClient();
 client.Timeout = TimeSpan.FromSeconds(30);
 ```
 
-### 8.3 使用连接池
+### 10.3 使用连接池
 
-```csharp showLineNumbers
+```csharp
 var client = new HttpClient();
 client.BaseAddress = new Uri("http://localhost:7789");
 
@@ -291,4 +323,21 @@ var proxy = client.GetWebApiDispatchProxy<IApiServer>();
 // 复用代理实例
 var result1 = await proxy.Sum(1, 2);
 var result2 = await proxy.Sum(3, 4);
+```
+
+### 10.4 异常处理
+
+```csharp
+try
+{
+    var result = await client.InvokeTAsync<int>("/apiserver/sum", null, request);
+}
+catch (TimeoutException)
+{
+    Console.WriteLine("请求超时");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"请求失败: {ex.Message}");
+}
 ```

@@ -216,11 +216,20 @@ export function extractCodeRegion(regionTitle) {
   const content = codesContent;
   const lines = content.split('\\n');
   
-  // 修改正则表达式以支持高亮语法
+  // 转义特殊字符以用于正则表达式  
+  const escapeRegex = (str) => {
+    return str.replace(/[.*+?^\\$\\{\\}()|]/g, '\\\\\\\\$&')
+              .replace(/\\[/g, '\\\\\\\\[')
+              .replace(/\\]/g, '\\\\\\\\]')
+              .replace(/\\\\\\\\/g, '\\\\\\\\\\\\\\\\');
+  };
+  const escapedTitle = escapeRegex(regionTitle);
+  
+  // 修改正则表达式以支持高亮语法和尾部空白(\\r等)
   // 匹配 #region RegionName {1,2-3} 或 #region RegionName
-  const regionStartPattern = new RegExp(\`^\\\\s*#region\\\\s+\${regionTitle}(?:\\\\s*\\\\{([^}]+)\\\\})?\\\\s*$\`);
-  const anyRegionStartPattern = /^\\s*#region\\s+(.+)\\s*$/;
-  const regionEndPattern = /^\\s*#endregion\\s*$/;
+  const regionStartPattern = new RegExp(\`^\\\\s*#region\\\\s+\${escapedTitle}(?:\\\\s*\\\\{([^}]+)\\\\})?\\\\s*$\`);
+  const anyRegionStartPattern = /^\\s*#region\\s+(.+?)(?:\\s*\\{[^}]+\\})?\\s*$/;
+  const regionEndPattern = /^\\s*#endregion(?:\\s+.*?)?\\s*$/;
   
   let startIndex = -1;
   let endIndex = -1;
