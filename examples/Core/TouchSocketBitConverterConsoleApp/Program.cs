@@ -66,6 +66,119 @@ public static class TouchSocketBitConverterDemo
     }
     #endregion
 
+    #region 大小端转换器转换整型
+    private static void ConvertInt32Example()
+    {
+        // int -> byte[]
+        var data = TouchSocketBitConverter.BigEndian.GetBytes(0x12345678);
+
+        // byte[] -> int
+        int value = TouchSocketBitConverter.BigEndian.To<int>(data.Span);
+    }
+    #endregion
+
+    #region 大小端转换器转换浮点型
+    private static void ConvertFloatExample()
+    {
+        // float -> byte[]
+        float num = 3.14f;
+        var bytes = TouchSocketBitConverter.LittleEndian.GetBytes(num);
+
+        // byte[] -> float
+        float result = TouchSocketBitConverter.LittleEndian.To<float>(bytes.Span);
+    }
+    #endregion
+
+    #region 大小端转换器转换长整型
+    private static void ConvertInt64Example()
+    {
+        // long -> byte[]
+        long bigValue = 0x123456789ABCDEF0;
+        var data = TouchSocketBitConverter.Default.GetBytes(bigValue);
+
+        // byte[] -> long
+        long restored = TouchSocketBitConverter.Default.To<long>(data.Span);
+    }
+    #endregion
+
+    #region 大小端转换器转换高精度小数
+    private static void ConvertDecimalExample()
+    {
+        // decimal -> byte[]
+        decimal money = 123456.78m;
+        var decimalBytes = TouchSocketBitConverter.BigEndian.GetBytes(money);
+
+        // byte[] -> decimal
+        decimal result = TouchSocketBitConverter.BigEndian.To<decimal>(decimalBytes.Span);
+    }
+    #endregion
+
+    #region 大小端转换器不安全内存操作
+    private static void UnsafeMemoryExample()
+    {
+        byte[] buffer = new byte[8];
+        long value = 0x1122334455667788;
+
+        // 直接内存写入
+        TouchSocketBitConverter.LittleEndian.WriteBytes(buffer, value);
+
+        // 直接内存读取
+        long readValue = TouchSocketBitConverter.LittleEndian.To<long>(buffer);
+    }
+    #endregion
+
+    #region 大小端转换器布尔数组转换
+    private static void ConvertBoolArrayExample()
+    {
+        // bool[] -> byte[]
+        bool[] flags = { true, false, true, true, false, true, false, true };
+        var byteCount = TouchSocketBitConverter.GetConvertedLength<bool, byte>(flags.Length);
+        byte[] boolBytes = new byte[byteCount];
+        TouchSocketBitConverter.ConvertValues<bool, byte>(flags, boolBytes);
+
+        // byte[] -> bool[]
+        bool[] decodedFlags = new bool[flags.Length];
+        TouchSocketBitConverter.ConvertValues<byte, bool>(boolBytes, decodedFlags);
+    }
+    #endregion
+
+    #region 大小端转换器字节序验证
+    private static void CheckEndianCompatibility()
+    {
+        // 检查当前配置是否与系统字节序一致
+        bool isCompatible = TouchSocketBitConverter.Default.IsSameOfSet();
+    }
+    #endregion
+
+    #region 大小端转换器交换端序模式
+    private static void SwapEndianExample()
+    {
+        // 使用 BigSwap 模式处理网络数据包
+        var swappedData = TouchSocketBitConverter.BigSwapEndian.GetBytes(0xAABBCCDD);
+    }
+    #endregion
+
+    #region 大小端转换器网络数据包处理
+    private static void NetworkPacketExample()
+    {
+        // 配置全局大端模式
+        TouchSocketBitConverter.DefaultEndianType = EndianType.Big;
+
+        // 构造数据包
+        var packet = new byte[16];
+        int header = 0x4D534754;  // "MSGT"
+        float payload = 1024.5f;
+
+        // 写入数据
+        TouchSocketBitConverter.Default.WriteBytes(packet.AsSpan(0, 4), header);
+        TouchSocketBitConverter.Default.WriteBytes(packet.AsSpan(4, 4), payload);
+
+        // 解析数据
+        int parsedHeader = TouchSocketBitConverter.Default.To<int>(packet.AsSpan(0, 4));
+        float parsedPayload = TouchSocketBitConverter.Default.To<float>(packet.AsSpan(4, 4));
+    }
+    #endregion
+
     #region 修改默认字节序示例
     private static void ChangeDefaultEndian()
     {

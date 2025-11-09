@@ -13,6 +13,7 @@
 using System;
 using System.Text;
 using TouchSocket.Core;
+using TouchSocket.Sockets;
 
 namespace BytePoolConsoleApp;
 
@@ -20,58 +21,95 @@ internal class Program
 {
     private static void Main(string[] args)
     {
+        CreateArrayPool();
+        CreateByteBlock();
+        CreateValueByteBlock();
+        CreateByteBlockWithCustomPool();
+        CreateByteBlockWithUsing();
         BaseWriteRead();
-        BufferWriterWriteRead();
         PrimitiveWriteRead();
-        BytesPackageWriteRead();
-        IPackageWriteRead();
-        IPackageWriteRead();
+        BufferWriterWriteRead();
+        HoldingExample();
+
         Console.ReadKey();
     }
 
-    private static void ExtensionWrite()
+    #region 内存池创建自定义内存池
+
+    private static void CreateArrayPool()
     {
-        var byteBlock = new ValueByteBlock(1024);
-        try
-        {
-            MyByteBlockExtension.ExtensionWrite(ref byteBlock);
-        }
-        finally
-        {
-            byteBlock.Dispose();
-        }
+        System.Buffers.ArrayPool<byte> bytePool = System.Buffers.ArrayPool<byte>.Create(maxArrayLength: 1024 * 1024, maxArraysPerBucket: 50);
     }
 
-    private static void IPackageWriteRead()
+    #endregion 内存池创建自定义内存池
+
+    #region 内存池创建ByteBlock
+
+    private static void CreateByteBlock()
+    {
+        var byteBlock = new ByteBlock(1024 * 64);
+        byteBlock.Dispose();
+    }
+
+    #endregion 内存池创建ByteBlock
+
+    #region 内存池创建ValueByteBlock
+
+    private static void CreateValueByteBlock()
+    {
+        var byteBlock = new ValueByteBlock(1024 * 64);
+        byteBlock.Dispose();
+    }
+
+    #endregion 内存池创建ValueByteBlock
+
+    #region 内存池使用自定义内存池创建
+
+    private static void CreateByteBlockWithCustomPool()
+    {
+        var customPool = System.Buffers.ArrayPool<byte>.Create();
+        var byteBlock = new ByteBlock(1024 * 64, (c) => customPool.Rent(c), (m) =>
+        {
+            if (System.Runtime.InteropServices.MemoryMarshal.TryGetArray((ReadOnlyMemory<byte>)m, out var result))
+            {
+                customPool.Return(result.Array);
+            }
+        });
+        byteBlock.Dispose();
+    }
+
+    #endregion 内存池使用自定义内存池创建
+
+    #region 内存池使用using释放
+
+    private static void CreateByteBlockWithUsing()
     {
         using (var byteBlock = new ByteBlock(1024 * 64))
         {
-            byteBlock.WritePackage(new MyPackage()
-            {
-                Property = 10
-            });
-            byteBlock.SeekToStart();
-
-            var myPackage = byteBlock.ReadPackage<MyPackage>();
+            //使用ByteBlock
         }
     }
 
-    private static void BytesPackageWriteRead()
+    #endregion 内存池使用using释放
+
+    #region 内存池读写数组
+
+    private static void BaseWriteRead()
     {
-        var byteBlock = new ByteBlock(1024 * 64);
-        try
+        using (var byteBlock = new ByteBlock(1024 * 64))
         {
-            WriterExtension.WriteByteSpan(ref byteBlock, Encoding.UTF8.GetBytes("TouchSocket"));
+            byteBlock.Write(new byte[] { 0, 1, 2, 3 });//将字节数组写入
 
-            byteBlock.SeekToStart();
+            byteBlock.SeekToStart();//将游标重置
 
-            var bytes = ReaderExtension.ReadByteSpan(ref byteBlock);
-        }
-        finally
-        {
-            byteBlock.Dispose();
+            var buffer = new byte[byteBlock.Length];//定义一个数组容器
+            var r = byteBlock.Read(buffer);//读取数据到容器，并返回读取的长度r
         }
     }
+
+    #endregion 内存池读写数组
+
+    #region 内存池基础类型读写
 
     private static void PrimitiveWriteRead()
     {
@@ -96,6 +134,10 @@ internal class Program
         }
     }
 
+    #endregion 内存池基础类型读写
+
+    #region 内存池BufferWriter方式写入
+
     private static void BufferWriterWriteRead()
     {
         using (var byteBlock = new ByteBlock(1024 * 64))
@@ -118,43 +160,69 @@ internal class Program
         }
     }
 
-    private static void BaseWriteRead()
+    #endregion 内存池BufferWriter方式写入
+
+    #region 内存池多线程同步协作
+
+    private static void HoldingExample()
     {
-        using (var byteBlock = new ByteBlock(1024 * 64))
+        // 此示例演示了SetHolding的用法
+        // 实际使用请参考MyTClient和MyTClientError类
+    }
+
+    #endregion 内存池多线程同步协作
+
+    private static void ExtensionWrite()
+    {
+        var byteBlock = new ValueByteBlock(1024);
+        try
         {
-            byteBlock.Write(new byte[] { 0, 1, 2, 3 });//将字节数组写入
-
-            byteBlock.SeekToStart();//将游标重置
-
-            var buffer = new byte[byteBlock.Length];//定义一个数组容器
-            var r = byteBlock.Read(buffer);//读取数据到容器，并返回读取的长度r
+            MyByteBlockExtension.ExtensionWrite(ref byteBlock);
+        }
+        finally
+        {
+            byteBlock.Dispose();
         }
     }
+}
 
-    private static void Performance()
+#region 内存池异步Hold错误示例
+
+// 错误示例：直接在异步任务中使用ByteBlock会导致异常
+// 因为byteBlock在异步任务开始前就已经被释放了
+internal static class HoldErrorExample
+{
+    public static void HandleData(ByteBlock byteBlock)
     {
-        var count = 1000000;
-        var timeSpan1 = TimeMeasurer.Run(() =>
+        System.Threading.Tasks.Task.Run(() =>
         {
-            for (var i = 0; i < count; i++)
-            {
-                var buffer = new byte[1024];
-            }
+            // 错误：此时byteBlock可能已被释放
+            string mes = byteBlock.Span.ToString(Encoding.UTF8);
+            Console.WriteLine($"已接收到信息：{mes}");
         });
-
-        var timeSpan2 = TimeMeasurer.Run(() =>
-        {
-            for (var i = 0; i < count; i++)
-            {
-                var byteBlock = new ByteBlock(1024);
-                byteBlock.Dispose();
-            }
-        });
-
-        Console.WriteLine($"直接实例化：{timeSpan1}");
-        Console.WriteLine($"内存池实例化：{timeSpan2}");
     }
 }
+
+#endregion 内存池异步Hold错误示例
+
+#region 内存池异步Hold正确示例
+
+// 正确示例：使用SetHolding锁定ByteBlock，在异步任务中使用后再解锁
+internal static class HoldCorrectExample
+{
+    public static void HandleData(ByteBlock byteBlock)
+    {
+        byteBlock.SetHolding(true);//异步前锁定
+        System.Threading.Tasks.Task.Run(() =>
+        {
+            string mes = byteBlock.Span.ToString(Encoding.UTF8);
+            byteBlock.SetHolding(false);//使用完成后取消锁定，且不用再调用Dispose
+            Console.WriteLine($"已接收到信息：{mes}");
+        });
+    }
+}
+
+#endregion 内存池异步Hold正确示例
 
 internal class MyPackage : PackageBase
 {
@@ -170,11 +238,6 @@ internal class MyPackage : PackageBase
     {
         this.Property = ReaderExtension.ReadValue<TByteBlock, int>(ref byteBlock);
     }
-}
-
-internal class MyClass
-{
-    public int Property { get; set; }
 }
 
 internal static class MyByteBlockExtension
