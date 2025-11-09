@@ -28,6 +28,7 @@ public partial class Form1 : Form
 
     private void Form1_Load(object? sender, EventArgs e)
     {
+        #region 远程文件系统配置客户端
         this.m_client.SetupAsync(new TouchSocketConfig()
             .SetRemoteIPHost("127.0.0.1:7789")
             .SetDmtpOption(options=>
@@ -45,6 +46,7 @@ public partial class Form1 : Form
             {
                 a.UseDmtpRemoteAccess();
             }));
+        #endregion
         this.m_client.ConnectAsync();
 
         this.m_client.Logger.Info("成功连接");
@@ -97,7 +99,9 @@ public partial class Form1 : Form
                 this.m_client.Logger.Warning("路径不能为空。");
                 return;
             }
+            #region 远程文件系统获取目录信息
             var result = await this.m_client.GetRemoteAccessActor().GetDirectoryInfoAsync(this.textBox1.Text, millisecondsTimeout: 30 * 1000);
+            #endregion
             this.m_client.Logger.Info($"结果：{result.ResultCode}，信息：{result.Message}，详细信息请在对话框获取。");
         }
         catch (Exception ex)

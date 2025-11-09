@@ -49,11 +49,13 @@ internal static class Program
                {
                    a.AddConsoleLogger();
                })
+               #region 远程文件系统配置插件
                .ConfigurePlugins(a =>
                {
                    a.UseDmtpRemoteAccess();//使用Dmtp远程访问插件
                    a.Add<MyRemoteAccessPlugin>();
                })
+               #endregion
                .SetDmtpOption(options=>
                {
                    options.VerifyToken = "Dmtp";//连接验证口令
@@ -63,6 +65,7 @@ internal static class Program
         return service;
     }
 
+    #region 远程文件系统响应端插件
     public class MyRemoteAccessPlugin : PluginBase, IDmtpRemoteAccessingPlugin
     {
         public async Task OnRemoteAccessing(IDmtpActorObject client, RemoteAccessingEventArgs e)
@@ -85,4 +88,5 @@ internal static class Program
             await e.InvokeNext();
         }
     }
+    #endregion
 }
