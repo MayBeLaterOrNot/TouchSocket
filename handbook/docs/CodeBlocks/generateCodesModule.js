@@ -32,9 +32,10 @@ function findCsFiles(dirPath, excludePatterns = EXCLUDE_PATTERNS)
     const itemPath = path.join(dirPath, item);
     const stat = fs.statSync(itemPath);
 
-    // 检查是否需要排除
+    // 检查是否需要排除 - 修复：检查路径分段而非整个路径字符串
+    const pathParts = itemPath.split(path.sep);
     const shouldExclude = excludePatterns.some(pattern =>
-      itemPath.toLowerCase().includes(pattern.toLowerCase())
+      pathParts.some(part => part.toLowerCase() === pattern.toLowerCase())
     );
 
     if (shouldExclude)
