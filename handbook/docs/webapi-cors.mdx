@@ -1,0 +1,145 @@
+---
+id: webapi-cors
+title: WebAPI 跨域配置
+---
+
+## 一、CORS 跨域
+
+CORS（Cross-Origin Resource Sharing）允许浏览器跨域访问资源。
+
+### 1.1 全局 CORS 配置
+
+最简单的方式是启用全局 CORS：
+
+```csharp showLineNumbers
+.ConfigurePlugins(a =>
+{
+    a.UseWebApi();
+
+    // 启用全局CORS，允许所有来源
+    a.UseCors(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+
+    a.UseDefaultHttpServicePlugin();
+})
+```
+
+### 1.2 限制特定来源
+
+```csharp showLineNumbers
+a.UseCors(policy =>
+{
+    policy.AllowOrigins("http://localhost:3000", "https://example.com")
+          .AllowMethods("GET", "POST")
+          .AllowHeaders("Content-Type", "Authorization");
+});
+```
+
+### 1.3 方法级 CORS
+
+在特定方法上启用 CORS：
+
+```csharp showLineNumbers
+public partial class ApiServer : SingletonRpcServer
+{
+    [EnableCors]
+    [WebApi(Method = HttpMethodType.Get)]
+    public string GetData()
+    {
+        return "Data with CORS enabled";
+    }
+}
+```
+
+### 1.4 类级 CORS
+
+在整个类上启用 CORS：
+
+```csharp showLineNumbers
+[EnableCors]
+public partial class ApiServer : SingletonRpcServer
+{
+    [WebApi(Method = HttpMethodType.Get)]
+    public string GetData()
+    {
+        return "Data";
+    }
+
+    [WebApi(Method = HttpMethodType.Post)]
+    public string PostData(string data)
+    {
+        return $"Received: {data}";
+    }
+}
+```
+
+### 1.5 自定义 CORS 策略
+
+```csharp showLineNumbers
+a.UseCors(policy =>
+{
+    policy.AllowOrigins("http://localhost:3000")
+          .AllowMethods("GET", "POST", "PUT", "DELETE")
+          .AllowHeaders("Content-Type", "Authorization", "X-Custom-Header")
+          .AllowCredentials() // 允许携带凭证
+          .SetMaxAge(3600); // 预检请求缓存时间（秒）
+});
+```
+
+## 二、完整示例
+
+```csharp showLineNumbers
+// 服务器端
+var service = new HttpService();
+await service.SetupAsync(new TouchSocketConfig()
+    .SetListenIPHosts(7789)
+    .ConfigurePlugins(a =>
+    {
+        a.UseWebApi();
+
+        // 配置CORS
+        a.UseCors(policy =>
+        {
+            policy.AllowOrigins("http://localhost:3000")
+                  .AllowMethods("GET", "POST", "PUT", "DELETE")
+                  .AllowHeaders("Content-Type", "Authorization")
+                  .AllowCredentials();
+        });
+
+        a.UseDefaultHttpServicePlugin();
+    }));
+
+await service.StartAsync();
+
+// API 服务
+[EnableCors]
+public partial class ApiServer : SingletonRpcServer
+{
+    [WebApi(Method = HttpMethodType.Get)]
+    public List<string> GetUsers()
+    {
+        return new List<string> { "Alice", "Bob", "Charlie" };
+    }
+
+    [WebApi(Method = HttpMethodType.Post)]
+    public string CreateUser([FromBody] UserDto user)
+    {
+        return $"Created: {user.Name}";
+    }
+}
+
+// 客户端（JavaScript）
+fetch('http://localhost:7789/apiserver/getusers', {
+    method: 'GET',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    credentials: 'include' // 携带凭证
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```

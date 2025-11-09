@@ -119,4 +119,35 @@ internal class Program
         //}
         Console.ReadKey();
     }
+
+    private static async Task SimpleStart()
+    {
+        #region 启动WebApi服务器
+        var service = new HttpService();
+        await service.SetupAsync(new TouchSocketConfig()
+            .SetListenIPHosts(7789)
+            .ConfigureContainer(a =>
+            {
+                a.AddConsoleLogger();
+                a.AddRpcStore(store =>
+                {
+                    store.RegisterServer<DemoApiServer>();//注册服务
+                });
+            })
+            .ConfigurePlugins(a =>
+            {
+                a.UseTcpSessionCheckClear();
+
+                a.UseWebApi();
+
+                //此插件是http的兜底插件，应该最后添加。作用是当所有路由不匹配时返回404.且内部也会处理Option请求。可以更好的处理来自浏览器的跨域探测。
+                a.UseDefaultHttpServicePlugin();
+            }));
+        await service.StartAsync();
+
+        Console.WriteLine("以下连接用于测试webApi");
+        Console.WriteLine($"使用：http://127.0.0.1:7789/ApiServer/Sum?a=10&b=20");
+        #endregion
+
+    }
 }

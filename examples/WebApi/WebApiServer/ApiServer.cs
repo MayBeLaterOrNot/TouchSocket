@@ -31,7 +31,8 @@ public partial class ApiServer : SingletonRpcServer
         this.m_logger = logger;
     }
 
-    [EnableCors("cors")]//使用跨域
+
+    #region Router路由
     [Router("[api]/[action]ab")]//此路由会以"/ApiServer/Sumab"实现
     [Router("[api]/[action]")]//此路由会以"/ApiServer/Sum"实现
     [WebApi(Method = HttpMethodType.Get)]
@@ -39,7 +40,10 @@ public partial class ApiServer : SingletonRpcServer
     {
         return a + b;
     }
+    #endregion
 
+
+    [EnableCors("cors")]//使用跨域
     [WebApi(Method = HttpMethodType.Get)]
     public int SumCallContext(IWebApiCallContext callContext, int a, int b)
     {
