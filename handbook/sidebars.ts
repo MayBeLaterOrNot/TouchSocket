@@ -212,30 +212,9 @@ module.exports =
       ]
     },
     {
-      "type": "category",
-      "label": "08、Udp组件",
-      "items": [
-        {
-          "type": "doc",
-          "id": "udpsession",
-          "label": "8.1 创建UdpSession"
-        },
-        {
-          "type": "doc",
-          "id": "udpwaitingclient",
-          "label": "8.2 同步请求数据"
-        },
-        {
-          "type": "doc",
-          "id": "udptransmitbigdata",
-          "label": "8.3 传输大于64K的数据"
-        },
-        {
-          "type": "doc",
-          "id": "udpbroadcast",
-          "label": "8.4 组播、广播"
-        }
-      ]
+      "type": "doc",
+      "id": "udpsession",
+      "label": "08、UdpSession组件"
     },
     {
       "type": "doc",
