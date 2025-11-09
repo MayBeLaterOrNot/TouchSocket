@@ -36,9 +36,11 @@ internal class Program
                      store.RegisterServer<ApiServer>();//注册服务
 
 #if DEBUG
+                     #region WebApi服务端代码生成
                      //下列代码，会生成客户端的调用代码。
                      var codeString = store.GetProxyCodes("WebApiProxy", typeof(WebApiAttribute));
                      File.WriteAllText("../../../WebApiProxy.cs", codeString);
+                     #endregion
 #endif
                  });
 
