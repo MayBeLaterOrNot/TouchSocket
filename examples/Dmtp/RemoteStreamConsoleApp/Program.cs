@@ -34,16 +34,22 @@ internal class Program
 
         var client = await GetTcpDmtpClient();
 
+        #region 远程流映射请求端
         //元数据可以传递一些字符串数据
         var metadata = new Metadata();
         metadata.Add("tag", "tag1");
 
         var remoteStream = await client.GetDmtpRemoteStreamActor().LoadRemoteStreamAsync(metadata, CancellationToken.None);
+        #endregion
 
         client.Logger.Info("已经成功载入流，请输入任意字符");
 
         //可以持续写入流，但在此处只写入了一次
-        await remoteStream.WriteAsync(Encoding.UTF8.GetBytes(Console.ReadLine()));
+        var input = Console.ReadLine();
+        if (input != null)
+        {
+            await remoteStream.WriteAsync(Encoding.UTF8.GetBytes(input));
+        }
 
         //可以使用下列代码完成持续读流
         //while (true)
@@ -97,7 +103,9 @@ internal class Program
                })
                .ConfigurePlugins(a =>
                {
+                   #region 远程流映射启用插件
                    a.UseDmtpRemoteStream();//必须添加远程流访问插件
+                   #endregion
                    a.Add<MyRemoteStreamPlugin>();
                })
                .SetDmtpOption(options =>
@@ -108,8 +116,27 @@ internal class Program
         service.Logger.Info("服务器成功启动");
         return service;
     }
+
+    #region 远程流映射读写操作
+    private static async Task RemoteStreamReadWrite(TcpDmtpClient client)
+    {
+        var metadata = new Metadata();
+        metadata.Add("tag", "tag1");
+        var remoteStream = await client.GetDmtpRemoteStreamActor().LoadRemoteStreamAsync(metadata, CancellationToken.None);
+
+        byte[] data = new byte[] { 0, 1, 2, 3, 4 };
+        await remoteStream.WriteAsync(data);
+
+        remoteStream.Position = 0;
+        byte[] buffer = new byte[5];
+        await remoteStream.ReadAsync(buffer);
+
+        remoteStream.Dispose();
+    }
+    #endregion
 }
 
+#region 远程流映射响应端插件
 internal class MyRemoteStreamPlugin : PluginBase, IDmtpRemoteStreamPlugin
 {
     private readonly ILog m_logger;
@@ -141,3 +168,4 @@ internal class MyRemoteStreamPlugin : PluginBase, IDmtpRemoteStreamPlugin
         await e.InvokeNext();
     }
 }
+#endregion
