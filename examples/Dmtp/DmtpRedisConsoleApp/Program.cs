@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 //  此代码版权（除特别声明或在XREF结尾的命名空间的代码）归作者本人若汝棋茗所有
 //  源代码使用协议遵循本仓库的开源协议及附加协议，若本仓库没有设置，则按MIT开源协议授权
 //  CSDN博客：https://blog.csdn.net/qq_40374647
@@ -24,6 +24,8 @@ internal class Program
         var service = await GetTcpDmtpService();
         var client = await GetTcpDmtpClient();
 
+        #region Redis基本使用
+
         //获取Redis
         var redis = client.GetDmtpRedisActor();
 
@@ -41,11 +43,15 @@ internal class Program
         client.Logger.Info($"Get result={result}");
         await redis.ClearCacheAsync();
 
+        #endregion Redis基本使用
+
         Console.ReadKey();
     }
 
     private static async Task<TcpDmtpClient> GetTcpDmtpClient()
     {
+        #region Redis客户端配置
+
         var client = new TcpDmtpClient();
         await client.SetupAsync(new TouchSocketConfig()
             .SetRemoteIPHost("127.0.0.1:7789")
@@ -63,10 +69,39 @@ internal class Program
             }));
         await client.ConnectAsync();
         return client;
+
+        #endregion Redis客户端配置
     }
 
     private static async Task<TcpDmtpService> GetTcpDmtpService()
     {
+        #region Redis服务器配置
+
+        var service = await new TouchSocketConfig()//配置
+               .SetListenIPHosts(new IPHost[] { new IPHost(7789) })
+               .ConfigureContainer(a =>
+               {
+                   a.AddConsoleLogger();
+               })
+               .ConfigurePlugins(a =>
+               {
+                   a.UseDmtpRedis();
+               })
+               .SetDmtpOption(options =>
+               {
+                   options.VerifyToken = "Dmtp";//连接验证口令。
+               })
+               .BuildServiceAsync<TcpDmtpService>();//此处build相当于new TcpDmtpService，然后SetupAsync，然后StartAsync。
+        service.Logger.Info("服务器成功启动");
+        return service;
+
+        #endregion Redis服务器配置
+    }
+
+    private static async Task<TcpDmtpService> GetTcpDmtpServiceWithCache()
+    {
+        #region Redis缓存持久化配置
+
         var service = await new TouchSocketConfig()//配置
                .SetListenIPHosts(new IPHost[] { new IPHost(7789) })
                .ConfigureContainer(a =>
@@ -87,5 +122,7 @@ internal class Program
                .BuildServiceAsync<TcpDmtpService>();//此处build相当于new TcpDmtpService，然后SetupAsync，然后StartAsync。
         service.Logger.Info("服务器成功启动");
         return service;
+
+        #endregion Redis缓存持久化配置
     }
 }
