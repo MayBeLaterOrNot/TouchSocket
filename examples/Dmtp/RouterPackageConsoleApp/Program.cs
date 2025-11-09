@@ -65,6 +65,7 @@ internal class Program
     private static async Task RequestMyResponsePackage()
     {
         using var client = await GetTcpDmtpClient();
+        #region 路由包请求端
         using (var byteBlock = new ByteBlock(1024 * 512))
         {
             //此处模拟一个大数据块，实际情况中请使用write写入实际数据。
@@ -80,6 +81,7 @@ internal class Program
 
             client.Logger.Info($"自定义响应成功，{response.Message}");
         }
+        #endregion
     }
 
     private static void ConsoleAction_OnException(Exception obj)
@@ -89,6 +91,7 @@ internal class Program
 
     private static async Task<TcpDmtpClient> GetTcpDmtpClient()
     {
+        #region 路由包添加插件
         var client = await new TouchSocketConfig()
                .SetRemoteIPHost("127.0.0.1:7789")
                .SetDmtpOption(options=>
@@ -104,6 +107,7 @@ internal class Program
                    a.UseDmtpRouterPackage();//添加路由包功能插件
                })
                .BuildClientAsync<TcpDmtpClient>();
+        #endregion
 
         client.Logger.Info("连接成功");
         return client;
@@ -142,10 +146,11 @@ internal class Program
     /// <summary>
     /// 定义请求包
     /// </summary>
+    #region 路由包定义请求包
     private class MyRequestPackage : DmtpRouterPackage
     {
         /// <summary>
-        /// 包尺寸大小。此值并非需要精准数值，只需要估计数据即可。其作用为申请内存池。所以数据应当大小合适。
+        /// 包尺寸大小。此值并非需要精准数值,只需要估计数据即可。其作用为申请内存池。所以数据应当大小合适。
         /// </summary>
         public override int PackageSize => 1024 * 1024;
 
@@ -167,10 +172,12 @@ internal class Program
             this.ByteBlock = ReaderExtension.ReadByteBlock(ref byteBlock);
         }
     }
+    #endregion
 
     /// <summary>
     /// 定义响应包
     /// </summary>
+    #region 路由包定义响应包
     private class MyResponsePackage : DmtpRouterPackage
     {
         /// <summary>
@@ -178,7 +185,9 @@ internal class Program
         /// </summary>
         public override int PackageSize => 1024;
     }
+    #endregion
 
+    #region 路由包响应端插件
     private class MyPlugin1 : PluginBase, IDmtpRouterPackagePlugin
     {
         private readonly ILog m_logger;
@@ -210,6 +219,7 @@ internal class Program
             await e.InvokeNext();
         }
     }
+    #endregion
 
     private class MyPlugin2 : PluginBase, IDmtpRouterPackagePlugin
     {
