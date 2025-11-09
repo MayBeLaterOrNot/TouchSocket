@@ -249,4 +249,120 @@ public partial class ApiServer : SingletonRpcServer
     }
 
     #endregion 上传大文件
+
+    #region WebApi调用上下文自定义响应状态码
+
+    [WebApi(Method = HttpMethodType.Get)]
+    public async Task CustomResponse(IWebApiCallContext callContext)
+    {
+        var response = callContext.HttpContext.Response;
+
+        response.SetStatus(201, "Created");
+        response.SetContent("Resource created successfully");
+
+        await response.AnswerAsync();
+    }
+
+    #endregion WebApi调用上下文自定义响应状态码
+
+    #region WebApi调用上下文设置响应头
+
+    [WebApi(Method = HttpMethodType.Get)]
+    public string SetHeaders(IWebApiCallContext callContext)
+    {
+        var response = callContext.HttpContext.Response;
+
+        response.Headers["X-Custom-Header"] = "CustomValue";
+        response.Headers["X-Timestamp"] = DateTime.Now.ToString();
+
+        return "Headers set";
+    }
+
+    #endregion WebApi调用上下文设置响应头
+
+    #region WebApi调用上下文设置ContentType
+
+    [WebApi(Method = HttpMethodType.Get)]
+    public string PlainText(IWebApiCallContext callContext)
+    {
+        callContext.HttpContext.Response.ContentType = "text/plain";
+        return "This is plain text";
+    }
+
+    #endregion WebApi调用上下文设置ContentType
+
+    #region WebApi调用上下文流式响应
+
+    [WebApi(Method = HttpMethodType.Get)]
+    public async Task StreamResponse(IWebApiCallContext callContext)
+    {
+        var response = callContext.HttpContext.Response;
+
+        response.ContentType = "text/plain";
+        response.SetStatus(200, "OK");
+
+        // 流式写入数据
+        for (int i = 0; i < 100; i++)
+        {
+            var data = $"Line {i}\n";
+            await response.WriteAsync(System.Text.Encoding.UTF8.GetBytes(data));
+            await Task.Delay(100); // 模拟延迟
+        }
+    }
+
+    #endregion WebApi调用上下文流式响应
+
+    #region WebApi调用上下文获取客户端信息和请求详情
+
+    [WebApi(Method = HttpMethodType.Get)]
+    public object GetRequestInfo(IWebApiCallContext callContext)
+    {
+        if (callContext.Caller is IHttpSessionClient httpSessionClient)
+        {
+            var request = callContext.HttpContext.Request;
+
+            return new
+            {
+                ClientIp = httpSessionClient.IP,
+                ClientPort = httpSessionClient.Port,
+                ClientId = httpSessionClient.Id,
+                Method = request.Method,
+                Url = request.URL,
+                RelativeUrl = request.RelativeURL,
+                UserAgent = request.Headers["User-Agent"],
+                ContentType = request.Headers["Content-Type"]
+            };
+        }
+        return "无法获取客户端信息";
+    }
+
+    #endregion WebApi调用上下文获取客户端信息和请求详情
+
+    #region WebApi调用上下文条件响应
+
+    [WebApi(Method = HttpMethodType.Get)]
+    public async Task ConditionalResponse(IWebApiCallContext callContext, string type)
+    {
+        var response = callContext.HttpContext.Response;
+
+        if (type == "json")
+        {
+            response.ContentType = "application/json";
+            response.SetContent("{\"message\":\"Hello JSON\"}");
+        }
+        else if (type == "xml")
+        {
+            response.ContentType = "application/xml";
+            response.SetContent("<message>Hello XML</message>");
+        }
+        else
+        {
+            response.SetStatus(400, "Bad Request");
+            response.SetContent("Invalid type parameter");
+        }
+
+        await response.AnswerAsync();
+    }
+
+    #endregion WebApi调用上下文条件响应
 }

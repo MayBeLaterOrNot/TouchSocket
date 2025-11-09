@@ -30,6 +30,8 @@ public class MyApiServer : SingletonRpcServer
         this.m_logger = logger;
     }
 
+    #region WebApi调用上下文WebSocket升级
+
     [Router("/[api]/[action]")]
     [WebApi(Method = HttpMethodType.Get)]
     public async Task ConnectWS(IWebApiCallContext callContext)
@@ -70,4 +72,6 @@ public class MyApiServer : SingletonRpcServer
             }
         }
     }
+
+    #endregion WebApi调用上下文WebSocket升级
 }

@@ -54,7 +54,7 @@ import CustomCodeBlock from './CodeBlocks/CustomCodeBlock';
 通过 `HttpContext.Response` 设置响应：
 
 - `response.SetStatus(code, message)` - 设置状态码
-- `response.SetHeader(name, value)` - 设置响应头
+- `response.Headers[name] = value` - 设置响应头
 - `response.ContentType` - 设置内容类型
 - `response.SetContent(data)` - 设置响应内容
 
@@ -62,44 +62,15 @@ import CustomCodeBlock from './CodeBlocks/CustomCodeBlock';
 
 ### 4.1 自定义响应状态码
 
-```csharp
-[WebApi(Method = HttpMethodType.Get)]
-public async Task CustomResponse(IWebApiCallContext callContext)
-{
-    var response = callContext.HttpContext.Response;
-    
-    response.SetStatus(201, "Created");
-    response.SetContent("Resource created successfully");
-    
-    await response.AnswerAsync();
-}
-```
+<CustomCodeBlock region="WebApi调用上下文自定义响应状态码"/>
 
 ### 4.2 设置响应头
 
-```csharp
-[WebApi(Method = HttpMethodType.Get)]
-public string SetHeaders(IWebApiCallContext callContext)
-{
-    var response = callContext.HttpContext.Response;
-    
-    response.SetHeader("X-Custom-Header", "CustomValue");
-    response.SetHeader("X-Timestamp", DateTime.Now.ToString());
-    
-    return "Headers set";
-}
-```
+<CustomCodeBlock region="WebApi调用上下文设置响应头"/>
 
 ### 4.3 设置 Content-Type
 
-```csharp
-[WebApi(Method = HttpMethodType.Get)]
-public string PlainText(IWebApiCallContext callContext)
-{
-    callContext.HttpContext.Response.ContentType = "text/plain";
-    return "This is plain text";
-}
-```
+<CustomCodeBlock region="WebApi调用上下文设置ContentType"/>
 
 ## 五、高级场景
 
@@ -107,128 +78,39 @@ public string PlainText(IWebApiCallContext callContext)
 
 可以将 HTTP 连接升级为 WebSocket：
 
-```csharp
-[WebApi(Method = HttpMethodType.Get)]
-public async Task UpgradeToWebSocket(IWebApiCallContext callContext)
-{
-    var httpContext = callContext.HttpContext;
-    
-    if (httpContext.Request.IsUpgrade())
-    {
-        if (await httpContext.Response.SwitchProtocolsAsync())
-        {
-            var webSocket = httpContext.WebSocket;
-            
-            // 接收 WebSocket 消息
-            using var receiveBlock = new ValueByteBlock();
-            while (true)
-            {
-                var result = await webSocket.ReadAsync(receiveBlock);
-                if (result.IsCompleted)
-                {
-                    break;
-                }
-                
-                // 回显消息
-                await webSocket.SendAsync(receiveBlock.Memory);
-                receiveBlock.Reset();
-            }
-        }
-    }
-}
-```
+<CustomCodeBlock region="WebApi调用上下文WebSocket升级"/>
 
-### 7.2 流式响应
+### 5.2 流式响应
 
 对于大型数据或实时数据，可以使用流式响应：
 
-```csharp
-[WebApi(Method = HttpMethodType.Get)]
-public async Task StreamResponse(IWebApiCallContext callContext)
-{
-    var response = callContext.HttpContext.Response;
-    
-    response.ContentType = "text/plain";
-    response.SetStatus(200, "OK");
-    
-    // 流式写入数据
-    for (int i = 0; i < 100; i++)
-    {
-        var data = $"Line {i}\n";
-        await response.WriteAsync(Encoding.UTF8.GetBytes(data));
-        await Task.Delay(100); // 模拟延迟
-    }
-}
-```
+<CustomCodeBlock region="WebApi调用上下文流式响应"/>
 
-## 八、常见场景示例
+## 六、常见场景示例
 
-### 8.1 获取客户端信息和请求详情
+### 6.1 获取客户端信息和请求详情
 
-```csharp
-[WebApi(Method = HttpMethodType.Get)]
-public object GetRequestInfo(IWebApiCallContext callContext)
-{
-    var caller = callContext.Caller;
-    var request = callContext.HttpContext.Request;
-    
-    return new 
-    {
-        ClientIp = caller.IP,
-        ClientPort = caller.Port,
-        ClientId = caller.Id,
-        Method = request.Method,
-        Url = request.URL,
-        RelativeUrl = request.RelativeURL,
-        UserAgent = request.Headers["User-Agent"],
-        ContentType = request.Headers["Content-Type"]
-    };
-}
-```
+<CustomCodeBlock region="WebApi调用上下文获取客户端信息和请求详情"/>
 
-### 8.2 条件响应
+### 6.2 条件响应
 
 根据条件返回不同的响应：
 
-```csharp
-[WebApi(Method = HttpMethodType.Get)]
-public async Task ConditionalResponse(IWebApiCallContext callContext, string type)
-{
-    var response = callContext.HttpContext.Response;
-    
-    if (type == "json")
-    {
-        response.ContentType = "application/json";
-        response.SetContent("{\"message\":\"Hello JSON\"}");
-    }
-    else if (type == "xml")
-    {
-        response.ContentType = "application/xml";
-        response.SetContent("<message>Hello XML</message>");
-    }
-    else
-    {
-        response.SetStatus(400, "Bad Request");
-        response.SetContent("Invalid type parameter");
-    }
-    
-    await response.AnswerAsync();
-}
-```
+<CustomCodeBlock region="WebApi调用上下文条件响应"/>
 
-## 九、注意事项
+## 七、注意事项
 
-### 9.1 响应写入时机
+### 7.1 响应写入时机
 
 - 如果方法有返回值，框架会自动序列化并写入响应
 - 如果使用 `Response.AnswerAsync()` 手动写入，方法应返回 `Task` 或 `void`
 
-### 9.2 异步操作
+### 7.2 异步操作
 
 - 文件操作、流操作建议使用异步方法（`async/await`）
 - 避免在 WebAPI 方法中执行长时间阻塞操作
 
-### 9.3 资源释放
+### 7.3 资源释放
 
 - 对于文件流、数据库连接等资源，确保正确释放
 - 使用 `using` 语句或 `try-finally` 块
