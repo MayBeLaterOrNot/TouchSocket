@@ -104,4 +104,69 @@ internal class Program
         #endregion
 
     }
+
+    private static async Task WaitingClient_FilterFuncRetrigger()
+    {
+        var m_tcpClient = new TcpClient();
+        await m_tcpClient.ConnectAsync("tcp://127.0.0.1:7789");
+
+        #region WaitingClient筛选函数重新触发插件
+        var waitingClient = m_tcpClient.CreateWaitingClient(new WaitingOptions()
+        {
+            FilterFuncAsync = async (response) =>
+            {
+                var byteBlock = response.Memory;
+                var requestInfo = response.RequestInfo;
+
+                if (true)//如果满足某个条件，则响应WaitingClient
+                {
+                    return true;
+                }
+                else
+                {
+                    //否则
+                    //数据不符合要求，waitingClient继续等待
+                    //如果需要在插件中继续处理，在此处触发插件
+
+                    await m_tcpClient.PluginManager.RaiseAsync(typeof(ITcpReceivedPlugin), m_tcpClient, new ReceivedDataEventArgs(byteBlock, requestInfo));
+
+                    return false;
+                }
+            }
+        });
+        #endregion
+    }
+
+    private static void WaitingClient_WrongUsageInReceived()
+    {
+        #region WaitingClient错误使用时机示例
+        var tcpClient = new TcpClient();
+
+        tcpClient.Received = async (client, e) =>
+        {
+            var waitingClient = client.CreateWaitingClient(new WaitingOptions());
+
+            //这里将导致死锁
+            await waitingClient.SendThenResponseAsync("hello");
+        };
+        #endregion
+    }
+
+    private static void WaitingClient_CorrectUsageInReceived()
+    {
+        var m_tcpClient = new TcpClient();
+
+        #region WaitingClient正确使用时机示例
+        m_tcpClient.Received = async (client, e) =>
+        {
+            //此处不能await，否则也会导致死锁
+            _ = Task.Run(async () =>
+            {
+                var waitingClient = client.CreateWaitingClient(new WaitingOptions());
+
+                await waitingClient.SendThenResponseAsync("hello");
+            });
+        };
+        #endregion
+    }
 }

@@ -105,33 +105,7 @@ import CustomCodeBlock from './CodeBlocks/CustomCodeBlock';
 
 如果想要实现，当筛选函数返回`false`时，将数据从插件再次传递，那么就需要在筛选函数中，自行触发插件。
 
-例如：
-
-```csharp {18} showLineNumbers
-var waitingClient = this.m_tcpClient.CreateWaitingClient(new WaitingOptions()
-{
-    FilterFuncAsync = async (response) =>
-    {
-        var byteBlock = response.Memory;
-        var requestInfo = response.RequestInfo;
-
-        if (true)//如果满足某个条件，则响应WaitingClient
-        {
-            return true;
-        }
-        else
-        {
-            //否则
-            //数据不符合要求，waitingClient继续等待
-            //如果需要在插件中继续处理，在此处触发插件
-
-            await this.m_tcpClient.PluginManager.RaiseAsync(typeof(ITcpReceivedPlugin), this.m_tcpClient, new ReceivedDataEventArgs(byteBlock, requestInfo));
-
-            return false;
-        }   
-    }
-});
-```
+<CustomCodeBlock region="WaitingClient筛选函数重新触发插件"/>
 
 ### 5.4 关于SendThenReturn与SendThenReturnAsync
 
@@ -147,40 +121,11 @@ var waitingClient = this.m_tcpClient.CreateWaitingClient(new WaitingOptions()
 
 `WaitingClient`的机制是发送一个数据，然后等待响应，所以，使用时机，绝对不可以在`Received`事件（或者插件）中调用。这将导致死锁。
 
-例如：
-
-```csharp {8} showLineNumbers
-var tcpClient = new TcpClient();
-
-var tcpClient.Received =async (client,e) =>
-{
-    var waitingClient = client.CreateWaitingClient(new WaitingOptions());
-
-    //这里将导致死锁
-    await waitingClient.SendThenResponseAsync("hello");
-};
-
-...
-```
+<CustomCodeBlock region="WaitingClient错误使用时机示例"/>
 
 如果确实需要使用，请使用`Task.Run`来异步处理。
 
-例如：
-
-```csharp {4-9} showLineNumbers
-this.m_tcpClient.Received =async (client,e) =>
-{
-    //此处不能await，否则也会导致死锁
-    _ = Task.Run(async () => 
-    {
-        var waitingClient = client.CreateWaitingClient(new WaitingOptions());
-
-        await waitingClient.SendThenResponseAsync("hello");
-    });
-};
-
-...
-```
+<CustomCodeBlock region="WaitingClient正确使用时机示例"/>
 
 
 ### 5.6 其他
