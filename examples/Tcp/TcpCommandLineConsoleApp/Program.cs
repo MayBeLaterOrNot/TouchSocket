@@ -19,6 +19,7 @@ internal class Program
 {
     private static async Task Main(string[] args)
     {
+        #region TcpCommandLine创建服务器
         var service = new TcpService();
 
         var config = new TouchSocketConfig();
@@ -49,13 +50,15 @@ internal class Program
         await service.StartAsync();
 
         service.Logger.Info("服务器成功启动。");
-        service.Logger.Info("使用：“Add 10 20”测试");
-        service.Logger.Info("使用：“MUL 10 20”测试");
-        service.Logger.Info("使用：“Exc”测试异常");
+        service.Logger.Info("使用：\"Add 10 20\"测试");
+        service.Logger.Info("使用：\"MUL 10 20\"测试");
+        service.Logger.Info("使用：\"Exc\"测试异常");
+        #endregion
         Console.ReadKey();
     }
 }
 
+#region TcpCommandLine创建命令行插件
 /// <summary>
 /// 命令执行插件。方法必须以Command结尾。
 /// </summary>
@@ -103,3 +106,4 @@ internal class MyCommandLinePlugin : TcpCommandLinePlugin
         throw new Exception("我异常了");
     }
 }
+#endregion
