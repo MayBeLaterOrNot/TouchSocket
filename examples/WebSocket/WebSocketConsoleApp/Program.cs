@@ -154,6 +154,7 @@ internal class Program
 
     private static async Task SendAdd()
     {
+        #region WebSocket命令行插件客户端调用
         var client = new WebSocketClient();
         await client.SetupAsync(new TouchSocketConfig()
              .ConfigureContainer(a =>
@@ -173,6 +174,7 @@ internal class Program
         await client.ConnectAsync();
 
         await client.SendAsync("Add 10 20");
+        #endregion
         await Task.Delay(1000);
 
         await client.CloseAsync("我想关就关");
@@ -433,6 +435,7 @@ internal class Program
     }
     private static async Task<HttpService> CreateHttpService()
     {
+        #region WebSocket命令行插件注册使用
         var service = new HttpService();
 
         var config = new TouchSocketConfig();
@@ -457,8 +460,8 @@ internal class Program
 
                  //a.Add<MyReadTextWebSocketPlugin>();
 
-                 //a.Add<MyWSCommandLinePlugin>();
-                 a.Add<MyWebSocketPlugin>();
+                 a.Add<MyWSCommandLinePlugin>();
+                 //a.Add<MyWebSocketPlugin>();
 
                  a.UseWebApi();
              }));
@@ -471,6 +474,7 @@ internal class Program
         service.Logger.Info("WebApi支持的连接地址=>ws://127.0.0.1:7789/MyServer/ConnectWS");
         service.Logger.Info("WebApi支持的连接地址=>ws://127.0.0.1:7789/MyServer/ws");
         return service;
+        #endregion
     }
 
     /// <summary>
@@ -694,6 +698,7 @@ internal class Program
     #endregion
 
 
+    #region WebSocket命令行插件声明
     /// <summary>
     /// 命令行插件。
     /// 声明的方法必须为公开实例方法、以"Command"结尾，且支持json字符串，参数之间空格隔开。
@@ -716,6 +721,7 @@ internal class Program
             return sumClass;
         }
     }
+    #endregion
 
     public class SumClass
     {
