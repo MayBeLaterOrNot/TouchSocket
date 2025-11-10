@@ -354,6 +354,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CreateDmtpConsoleApp", "Dmt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleActionConsoleApp", "Core\ConsoleActionConsoleApp\ConsoleActionConsoleApp.csproj", "{F646A400-15A5-9DFE-D66B-76BC09579811}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppMessengerConsoleApp", "Core\AppMessengerConsoleApp\AppMessengerConsoleApp.csproj", "{E69CACF0-FE0E-01E3-0B31-0804EABFFF4D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependencyPropertyConsoleApp", "Core\DependencyPropertyConsoleApp\DependencyPropertyConsoleApp.csproj", "{FCBCA3E2-22D3-4311-A1B7-AE029B961953}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -820,6 +824,14 @@ Global
 		{F646A400-15A5-9DFE-D66B-76BC09579811}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F646A400-15A5-9DFE-D66B-76BC09579811}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F646A400-15A5-9DFE-D66B-76BC09579811}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E69CACF0-FE0E-01E3-0B31-0804EABFFF4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E69CACF0-FE0E-01E3-0B31-0804EABFFF4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E69CACF0-FE0E-01E3-0B31-0804EABFFF4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E69CACF0-FE0E-01E3-0B31-0804EABFFF4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCBCA3E2-22D3-4311-A1B7-AE029B961953}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCBCA3E2-22D3-4311-A1B7-AE029B961953}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCBCA3E2-22D3-4311-A1B7-AE029B961953}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCBCA3E2-22D3-4311-A1B7-AE029B961953}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -972,6 +984,8 @@ Global
 		{3B17545F-6B5B-C98E-9EA2-27E6FCFFE9AF} = {F8C07F29-7233-4FD3-A3DC-45963071E20A}
 		{D791EA02-3EC8-44A0-9877-614DE92BA9B5} = {57B547B6-D725-4C3E-82A7-39ED03BD438B}
 		{F646A400-15A5-9DFE-D66B-76BC09579811} = {A228384F-7DF9-4144-B84E-AC8BF2F69D1B}
+		{E69CACF0-FE0E-01E3-0B31-0804EABFFF4D} = {A228384F-7DF9-4144-B84E-AC8BF2F69D1B}
+		{FCBCA3E2-22D3-4311-A1B7-AE029B961953} = {A228384F-7DF9-4144-B84E-AC8BF2F69D1B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DB787235-A13A-4A3D-B5A8-5DFEB6511EEE}
