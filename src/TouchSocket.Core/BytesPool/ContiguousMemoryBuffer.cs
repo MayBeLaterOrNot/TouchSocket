@@ -10,6 +10,7 @@
 // 感谢您的下载和使用
 // ------------------------------------------------------------------------------
 
+using System;
 using System.Buffers;
 using System.Runtime.InteropServices;
 
@@ -24,10 +25,10 @@ namespace TouchSocket.Core;
 /// 如果是多段内存，则从内存池中租用缓冲区并将所有段复制到连续内存中。
 /// 使用后应调用<see cref="Dispose"/>方法释放可能租用的内存资源。
 /// </remarks>
-public struct ContiguousMemoryBuffer : IDisposable
+public readonly struct ContiguousMemoryBuffer : IDisposable
 {
-    private ReadOnlyMemory<byte> m_memory;
-    private IMemoryOwner<byte> m_memoryOwner;
+    private readonly ReadOnlyMemory<byte> m_memory;
+    private readonly IMemoryOwner<byte> m_memoryOwner;
 
     /// <summary>
     /// 使用指定的只读字节序列初始化<see cref="ContiguousMemoryBuffer"/>的新实例。
@@ -39,24 +40,27 @@ public struct ContiguousMemoryBuffer : IDisposable
     /// </remarks>
     public ContiguousMemoryBuffer(ReadOnlySequence<byte> sequence)
     {
-        // 尝试直接获取单段内存
-        if (SequenceMarshal.TryGetReadOnlyMemory(sequence, out this.m_memory))
+        if (sequence.IsEmpty)
         {
+            this.m_memory = default;
             this.m_memoryOwner = null;
             return;
         }
 
-        // 多段内存处理
+        if (sequence.IsSingleSegment)
+        {
+            this.m_memory = SequenceMarshal.TryGetReadOnlyMemory(sequence, out var memory) 
+                ? memory 
+                : sequence.First;
+            this.m_memoryOwner = null;
+            return;
+        }
+
         var totalLength = (int)sequence.Length;
         this.m_memoryOwner = MemoryPool<byte>.Shared.Rent(totalLength);
-
-        // 分段复制数据
-        var destSpan = this.m_memoryOwner.Memory.Span;
-        foreach (var segment in sequence)
-        {
-            segment.Span.CopyTo(destSpan);
-            destSpan = destSpan.Slice(segment.Length);
-        }
+        
+        var destination = this.m_memoryOwner.Memory.Span;
+        sequence.CopyTo(destination);
 
         this.m_memory = this.m_memoryOwner.Memory.Slice(0, totalLength);
     }
@@ -69,7 +73,7 @@ public struct ContiguousMemoryBuffer : IDisposable
     /// 当输入序列是多段内存时，此属性返回 <see langword="true"/>；
     /// 当输入序列是单段内存时，此属性返回 <see langword="false"/>。
     /// </remarks>
-    public readonly bool IsRentedFromPool => this.m_memoryOwner != null;
+    public bool IsRentedFromPool => this.m_memoryOwner != null;
 
     /// <summary>
     /// 获取连续的内存块。
@@ -79,16 +83,23 @@ public struct ContiguousMemoryBuffer : IDisposable
     /// 返回的内存块保证是连续的，可以安全地用于需要连续内存的操作。
     /// 使用完毕后需要调用<see cref="Dispose"/>方法释放可能租用的资源。
     /// </remarks>
-    public readonly ReadOnlyMemory<byte> Memory => this.m_memory;
+    public ReadOnlyMemory<byte> Memory => this.m_memory;
+
+    /// <summary>
+    /// 获取一个值，该值指示当前缓冲区是否为空。
+    /// </summary>
+    /// <value>如果缓冲区为空，则为 <see langword="true"/>；否则为 <see langword="false"/>。</value>
+    public bool IsEmpty => this.m_memory.IsEmpty;
+
+    /// <summary>
+    /// 获取缓冲区的长度（字节数）。
+    /// </summary>
+    /// <value>缓冲区中的字节数。</value>
+    public int Length => this.m_memory.Length;
 
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (this.m_memoryOwner != null)
-        {
-            this.m_memoryOwner.Dispose();
-            this.m_memoryOwner = null;
-            this.m_memory = default;
-        }
+        this.m_memoryOwner?.Dispose();
     }
 }

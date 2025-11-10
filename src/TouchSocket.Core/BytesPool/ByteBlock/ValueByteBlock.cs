@@ -233,6 +233,12 @@ public struct ValueByteBlock : IByteBlock
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ExtendSize(int size)
     {
+        if (this.m_onRent == null || this.m_onReturn == null)
+        {
+            ThrowHelper.ThrowNotSupportedException("不支持扩容");
+            return;
+        }
+
         if (this.FreeLength < size)
         {
             var need = this.Capacity + size - (this.Capacity - this.Position);
@@ -245,12 +251,6 @@ public struct ValueByteBlock : IByteBlock
             if (lend > int.MaxValue)
             {
                 lend = Math.Min(need + 1024 * 1024 * 100, int.MaxValue);
-            }
-
-            if (this.m_onRent == null || this.m_onReturn == null)
-            {
-                ThrowHelper.ThrowNotSupportedException("不支持扩容");
-                return;
             }
 
 

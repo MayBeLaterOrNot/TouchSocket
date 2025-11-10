@@ -65,13 +65,13 @@ internal class MethodInvokeCodeBuilder : MethodCodeBuilder
         for (var i = 0; i < method.Parameters.Length; i++)
         {
             var parameter = method.Parameters[i];
-            if (parameter.Type.IsValueType)
+            if (parameter.Type.IsValueType && !this.IsNullableValueType(parameter.Type))
             {
                 codeBuilder.AppendLine($"var {parameter.Name}=System.Runtime.CompilerServices.Unsafe.Unbox<{parameter.Type.ToDisplayString()}>(ps[{i}]);");
             }
             else
             {
-                codeBuilder.AppendLine($"var {parameter.Name}=System.Runtime.CompilerServices.Unsafe.As<{parameter.Type.ToDisplayString()}>(ps[{i}]);");
+                codeBuilder.AppendLine($"var {parameter.Name}=({parameter.Type.ToDisplayString()})ps[{i}];");
             }
 
             if (parameter.RefKind == RefKind.Ref)
@@ -165,6 +165,8 @@ internal class MethodInvokeCodeBuilder : MethodCodeBuilder
                 }
             }
         }
+        
+        // 处理 ref 和 out 参数的回写
         for (var i = 0; i < method.Parameters.Length; i++)
         {
             var parameter = method.Parameters[i];
@@ -200,18 +202,17 @@ internal class MethodInvokeCodeBuilder : MethodCodeBuilder
         }
         if (this.IsTypeAwaitable(returnType, out var hasResult))
         {
-            //Debugger.Launch();
             var methodId = this.GetMethodName(method) + "ReturnTypeMethod";
             codeBuilder.AppendLine($"private static async Task<object> {methodId}(object o)");
             using (this.CreateCodeSpace(codeBuilder))
             {
-                if (returnType.IsValueType)
+                if (returnType.IsValueType && !this.IsNullableValueType(returnType))
                 {
                     codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.Unbox<{returnType.ToDisplayString()}>(o);");
                 }
                 else
                 {
-                    codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.As<{returnType.ToDisplayString()}>(o);");
+                    codeBuilder.AppendLine($"var result = ({returnType.ToDisplayString()})o;");
                 }
 
                 if (hasResult)
@@ -316,5 +317,12 @@ internal class MethodInvokeCodeBuilder : MethodCodeBuilder
         }
 
         return "@obj";
+    }
+
+    private bool IsNullableValueType(ITypeSymbol typeSymbol)
+    {
+        return typeSymbol.IsValueType 
+            && typeSymbol is INamedTypeSymbol namedType 
+            && namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
     }
 }

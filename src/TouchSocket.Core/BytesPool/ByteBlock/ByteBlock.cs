@@ -247,6 +247,12 @@ public sealed class ByteBlock : IByteBlock
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ExtendSize(int size)
     {
+        if (this.m_onRent == null || this.m_onReturn == null)
+        {
+            ThrowHelper.ThrowNotSupportedException("不支持扩容");
+            return;
+        }
+
         if (this.FreeLength < size)
         {
             var need = this.Capacity + size - (this.Capacity - this.Position);
@@ -261,11 +267,6 @@ public sealed class ByteBlock : IByteBlock
                 lend = Math.Min(need + 1024 * 1024 * 100, int.MaxValue);
             }
 
-            if (this.m_onRent == null || this.m_onReturn == null)
-            {
-                ThrowHelper.ThrowNotSupportedException("不支持扩容");
-                return;
-            }
 
             var bytes = this.m_onRent((int)lend);
 

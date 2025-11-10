@@ -88,13 +88,13 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
                     codeBuilder.AppendLine("public async Task<object> GetResultAsync(object o)");
                     using (this.CreateCodeSpace(codeBuilder))
                     {
-                        if (method.ReturnType.IsValueType)
+                        if (method.ReturnType.IsValueType && !this.IsNullableValueType(method.ReturnType))
                         {
                             codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.Unbox<{method.ReturnType.ToDisplayString()}>(o);");
                         }
                         else
                         {
-                            codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.As<{method.ReturnType.ToDisplayString()}>(o);");
+                            codeBuilder.AppendLine($"var result = ({method.ReturnType.ToDisplayString()})o;");
                         }
 
                         if (hasConfigureAwait)
@@ -119,13 +119,13 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
                     codeBuilder.AppendLine("public async Task<object> GetResultAsync(object o)");
                     using (this.CreateCodeSpace(codeBuilder))
                     {
-                        if (method.ReturnType.IsValueType)
+                        if (method.ReturnType.IsValueType && !this.IsNullableValueType(method.ReturnType))
                         {
                             codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.Unbox<{method.ReturnType.ToDisplayString()}>(o);");
                         }
                         else
                         {
-                            codeBuilder.AppendLine($"var result = System.Runtime.CompilerServices.Unsafe.As<{method.ReturnType.ToDisplayString()}>(o);");
+                            codeBuilder.AppendLine($"var result = ({method.ReturnType.ToDisplayString()})o;");
                         }
 
                         if (hasConfigureAwait)
@@ -164,7 +164,6 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
 
     private void BuildMethod(StringBuilder codeBuilder, IMethodSymbol method)
     {
-        //var objectName = this.GetObjectName(method);
         codeBuilder.AppendLine($"public object Invoke(object instance, object[] ps)");
         codeBuilder.AppendLine("{");
 
@@ -172,13 +171,13 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
         for (var i = 0; i < method.Parameters.Length; i++)
         {
             var parameter = method.Parameters[i];
-            if (parameter.Type.IsValueType)
+            if (parameter.Type.IsValueType && !this.IsNullableValueType(parameter.Type))
             {
                 codeBuilder.AppendLine($"var {parameter.Name}=System.Runtime.CompilerServices.Unsafe.Unbox<{parameter.Type.ToDisplayString()}>(ps[{i}]);");
             }
             else
             {
-                codeBuilder.AppendLine($"var {parameter.Name}=System.Runtime.CompilerServices.Unsafe.As<{parameter.Type.ToDisplayString()}>(ps[{i}]);");
+                codeBuilder.AppendLine($"var {parameter.Name}=({parameter.Type.ToDisplayString()})ps[{i}];");
             }
 
             if (parameter.RefKind == RefKind.Ref)
@@ -272,6 +271,8 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
                 }
             }
         }
+
+        // 处理 ref 和 out 参数的回写
         for (var i = 0; i < method.Parameters.Length; i++)
         {
             var parameter = method.Parameters[i];
@@ -388,5 +389,12 @@ internal class MethodInvokeClassCodeBuilder : MethodCodeBuilder
         }
 
         return "@obj";
+    }
+
+    private bool IsNullableValueType(ITypeSymbol typeSymbol)
+    {
+        return typeSymbol.IsValueType 
+            && typeSymbol is INamedTypeSymbol namedType 
+            && namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
     }
 }
