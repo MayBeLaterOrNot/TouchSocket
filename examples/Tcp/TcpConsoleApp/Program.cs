@@ -365,6 +365,7 @@ internal class Program
              })
              .ConfigurePlugins(a =>
              {
+                 #region Tcp健康活性检验插件配置
                  a.UseTcpSessionCheckClear(options =>
                  {
                      options.CheckClearType = CheckClearType.All;
@@ -374,6 +375,7 @@ internal class Program
                          await c.CloseAsync("超时无数据");
                      };
                  });
+                 #endregion
                  a.Add<ClosePlugin>();
                  a.Add<TcpServiceReceivedPlugin>();
                  a.Add<MyServicePluginClass>();

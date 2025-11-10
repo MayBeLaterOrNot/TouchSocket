@@ -331,13 +331,8 @@ module.exports =
         },
         {
           "type": "doc",
-          "id": "websocketheartbeat",
-          "label": "13.4 心跳设置"
-        },
-        {
-          "type": "doc",
           "id": "wscommandlineplugin",
-          "label": "13.5 快捷事务命令行"
+          "label": "13.4 快捷事务命令行"
         }
       ]
     },
