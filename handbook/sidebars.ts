@@ -114,43 +114,38 @@ module.exports =
         },
         {
           "type": "doc",
-          "id": "jsonserialize",
-          "label": "5.8 Json序列化"
-        },
-        {
-          "type": "doc",
           "id": "ioc",
-          "label": "5.9 依赖注入容器(IOC)"
+          "label": "5.8 依赖注入容器(IOC)"
         },
         {
           "type": "doc",
           "id": "dependencyproperty",
-          "label": "5.10 依赖属性"
+          "label": "5.9 依赖属性"
         },
         {
           "type": "doc",
           "id": "filepool",
-          "label": "5.11 文件流池"
+          "label": "5.10 文件流池"
         },
         {
           "type": "doc",
           "id": "pluginsmanager",
-          "label": "5.12 插件系统"
+          "label": "5.11 插件系统"
         },
         {
           "type": "doc",
           "id": "ipackage",
-          "label": "5.13 包序列化模式"
+          "label": "5.12 包序列化模式"
         },
         {
           "type": "doc",
           "id": "dynamicmethod",
-          "label": "5.14 动态方法调用"
+          "label": "5.13 动态方法调用"
         },
         {
           "type": "doc",
           "id": "othercore",
-          "label": "5.15 其他相关功能类"
+          "label": "5.14 其他相关功能类"
         }
       ]
     },
