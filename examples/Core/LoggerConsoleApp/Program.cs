@@ -23,55 +23,89 @@ internal class Program
 
     private static void TestConsoleLogger()
     {
+        #region 日志控制台日志记录器使用
         var logger = ConsoleLogger.Default;
-
-        logger.LogLevel = LogLevel.Debug;
-
         logger.Info("Message");
         logger.Warning("Warning");
         logger.Error("Error");
+        #endregion
     }
 
     private static void TestFileLogger()
     {
+        #region 日志文件日志记录器默认配置
+        var logger = new FileLogger();
+        logger.Info("Message");
+        logger.Warning("Warning");
+        logger.Error("Error");
+        #endregion
+    }
+
+    private static void TestFileLogger_MaxSize()
+    {
+        #region 日志文件日志记录器配置文件大小
+        var logger = new FileLogger()
+        {
+            MaxSize = 1024 * 1024 * 2
+        };
+        #endregion
+    }
+
+    private static void TestFileLogger_Folder()
+    {
+        #region 日志文件日志记录器配置文件路径默认
+        var logger = new FileLogger()
+        {
+            CreateLogFolder = (logLevel) =>
+            {
+                return $"logs\\{DateTime.Now:[yyyy-MM-dd]}";
+            }
+        };
+        #endregion
+    }
+
+    private static void TestFileLogger_FolderByLogLevel()
+    {
+        #region 日志文件日志记录器配置文件路径按日志类型
         var logger = new FileLogger()
         {
             CreateLogFolder = (logLevel) =>
             {
                 return $"logs\\{DateTime.Now:[yyyy-MM-dd]}\\{logLevel}";
-            },
-            FileNameFormat = "",
-
-
+            }
         };
-        logger.Info("Message");
-        logger.Warning("Warning");
-        logger.Error("Error");
+        #endregion
     }
 
     private static void TestEasyLogger()
     {
+        #region 日志简易日志记录器使用
         var logger = new EasyLogger(LoggerOutput);
         logger.Info("Message");
         logger.Warning("Warning");
         logger.Error("Error");
+        #endregion
     }
 
+    #region 日志简易日志记录器回调方法
     private static void LoggerOutput(string loggerString)
     {
         Console.WriteLine(loggerString);
 
-        //或者如果是winform程序，可以直接输出到TextBox
+        //或者如果是winform程序,可以直接输出到TextBox
     }
+    #endregion
 }
 
-internal class MyLogger : ILog
+#region 日志自定义日志记录器
+class MyLogger : ILog
 {
     public LogLevel LogLevel { get; set; } = LogLevel.Debug;
-    public string DateTimeFormat { get; set; }
+    public string DateTimeFormat { get; set; } = "yyyy-MM-dd HH:mm:ss ffff";
 
     public void Log(LogLevel logLevel, object source, string message, Exception exception)
     {
         //此处可以自由实现逻辑。
     }
 }
+#endregion

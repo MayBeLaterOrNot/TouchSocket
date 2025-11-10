@@ -42,6 +42,22 @@ internal class Program
              .SetListenIPHosts(7789)
              .ConfigureContainer(a =>
              {
+                 #region 日志容器配置文件日志
+                 a.AddFileLogger(fileLogger =>
+                 {
+                     fileLogger.MaxSize = 1024 * 1024;
+                     fileLogger.LogLevel = LogLevel.Debug;
+                 });
+                 #endregion
+
+                 #region 日志容器配置多日志记录器
+                 a.AddLogger(logger =>
+                 {
+                     logger.AddConsoleLogger();
+                     logger.AddFileLogger();
+                 });
+                 #endregion
+
                  a.AddLogger(logger =>
                  {
                      logger.AddConsoleLogger();
@@ -64,6 +80,7 @@ internal class Program
     }
 }
 
+#region 日志Log4net自定义日志记录器
 internal class Mylog4netLogger : LoggerBase
 {
     private readonly log4net.ILog m_logger;
@@ -109,3 +126,4 @@ internal class Mylog4netLogger : LoggerBase
         }
     }
 }
+#endregion

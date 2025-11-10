@@ -116,9 +116,11 @@ internal class Program
         #region Tcp服务器使用Received异步委托接收数据并回应
         service.Received = async (client, e) =>
         {
+            #region 日志注入容器后使用示例
             //从客户端收到信息
             var mes = e.Memory.Span.ToString(Encoding.UTF8);
-            client.Logger.Info($"已从{client.Id}接收到信息：{mes}");
+            service.Logger.Info($"服务器已从{client.Id}接收到信息：{mes}");
+            #endregion
 
             //按字符发送给客户端
             await client.SendAsync(mes);
@@ -133,7 +135,9 @@ internal class Program
              .SetListenIPHosts("tcp://127.0.0.1:7789", 7790)//可以同时监听多个地址
              .ConfigureContainer(a =>//容器的配置
              {
+                 #region 日志容器配置控制台日志
                  a.AddConsoleLogger();//添加一个控制台日志注入（注意：在maui中控制台日志不可用）
+                 #endregion
              })
              .ConfigurePlugins(a =>
              {
