@@ -128,6 +128,7 @@ public partial class MyRpcServer : SingletonRpcServer
         this.m_rpcCallContextAccessor = rpcCallContextAccessor;
     }
 
+    #region DmtpRpc服务端请求流数据
     /// <summary>
     /// 测试客户端请求，服务器响应大量流数据
     /// </summary>
@@ -153,7 +154,9 @@ public partial class MyRpcServer : SingletonRpcServer
         }
         return size;
     }
+    #endregion
 
+    #region DmtpRpc服务端推送流数据
     /// <summary>
     /// "测试推送"
     /// </summary>
@@ -180,6 +183,7 @@ public partial class MyRpcServer : SingletonRpcServer
         }
         return size;
     }
+    #endregion
 
     /// <summary>
     /// 测试取消调用
@@ -232,7 +236,7 @@ public partial class MyRpcServer : SingletonRpcServer
 }
 #endregion
 
-
+#region DmtpRpc同意转发路由数据
 internal class MyRpcPlugin : PluginBase, IDmtpRoutingPlugin
 {
     public async Task OnDmtpRouting(IDmtpActorObject client, PackageRouterEventArgs e)
@@ -246,6 +250,7 @@ internal class MyRpcPlugin : PluginBase, IDmtpRoutingPlugin
         await e.InvokeNext();
     }
 }
+#endregion
 
 public class MyRpcActionFilterAttribute : RpcActionFilterAttribute
 {
