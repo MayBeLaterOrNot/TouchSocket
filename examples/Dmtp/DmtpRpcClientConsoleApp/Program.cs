@@ -10,6 +10,7 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using MemoryPack;
 using RpcProxy;
 using TouchSocket.Core;
 using TouchSocket.Dmtp;
@@ -371,8 +372,11 @@ internal class SetMaxPackageSizeExample
 {
     public void ConfigMaxPackageSize()
     {
-        var config = new TouchSocketConfig()//配置
-                        .SetMaxPackageSize(1024 * 1024 * 10);
+        var config = new TouchSocketConfig();//配置
+        config.SetAdapterOption(options =>
+        {
+            options.MaxPackageSize = 10 * 1024 * 1024;//设置最大包大小为10MB
+        });
     }
 }
 #endregion
@@ -385,11 +389,13 @@ internal class ConfigureSerializationSelectorExample
         var config = new TouchSocketConfig()
             .ConfigurePlugins(a =>
             {
-                a.UseDmtpRpc()
-                .ConfigureDefaultSerializationSelector(selector =>
+                a.UseDmtpRpc(options =>
                 {
-                    selector.JsonSerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
-                    selector.FastSerializerContext = default;
+                    options.ConfigureDefaultSerializationSelector(selector =>
+                    {
+                        selector.JsonSerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
+                        selector.FastSerializerContext = default;
+                    });
                 });
             });
     }
@@ -404,8 +410,10 @@ internal class CustomSerializationExample
         var config = new TouchSocketConfig()
             .ConfigurePlugins(a =>
             {
-                a.UseDmtpRpc()
-                .SetSerializationSelector(new MemoryPackSerializationSelector());
+                a.UseDmtpRpc(options =>
+                {
+                    options.SerializationSelector = new MemoryPackSerializationSelector();
+                });
             });
     }
 }
@@ -414,25 +422,21 @@ public class MemoryPackSerializationSelector : ISerializationSelector
 {
     public object DeserializeParameter<TByteBlock>(ref TByteBlock byteBlock, SerializationType serializationType, Type parameterType) where TByteBlock : IBytesReader
     {
-        var len = byteBlock.ReadInt32();
-        var span = byteBlock.ReadToSpan(len);
-        //return MemoryPackSerializer.Deserialize(parameterType, span);
-        throw new NotImplementedException("需要安装MemoryPack包");
+        var len = ReaderExtension.ReadValue<TByteBlock, int>(ref byteBlock);
+        var span = ReaderExtension.ReadToSpan(ref byteBlock, len);
+        return MemoryPackSerializer.Deserialize(parameterType, span);
     }
 
     public void SerializeParameter<TByteBlock>(ref TByteBlock byteBlock, SerializationType serializationType, in object parameter) where TByteBlock : IBytesWriter
     {
-        var pos = byteBlock.Position;
-        byteBlock.Seek(4, SeekOrigin.Current);
-        //var memoryPackWriter = new MemoryPackWriter<TByteBlock>(ref byteBlock, null);
+        var writerAnchor = new WriterAnchor<TByteBlock>(ref byteBlock, 4);
 
-        //MemoryPackSerializer.Serialize(parameter.GetType(), ref memoryPackWriter, parameter);
+        var memoryPackWriter = new MemoryPackWriter<TByteBlock>(ref byteBlock, null);
 
-        //var newPos = byteBlock.Position;
-        //byteBlock.Position = pos;
-        //byteBlock.WriteInt32(memoryPackWriter.WrittenCount);
-        //byteBlock.Position = newPos;
-        throw new NotImplementedException("需要安装MemoryPack包");
+        MemoryPackSerializer.Serialize(parameter.GetType(), ref memoryPackWriter, parameter);
+
+        var span = writerAnchor.Rewind(ref byteBlock, out var len);
+        span.WriteValue(memoryPackWriter.WrittenCount);
     }
 }
 #endregion
