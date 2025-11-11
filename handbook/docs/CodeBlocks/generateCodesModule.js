@@ -379,11 +379,17 @@ export function getAvailableRegions() {
     const availableRegions = getAvailableRegions(codesContent);
     if (availableRegions.length > 0)
     {
-      console.log('🔍 找到以下代码区域:');
-      availableRegions.forEach(region =>
+      // 仅在 start 脚本时输出详细的区域列表，build 时不输出
+      // 检查是否在 build 环境中（通过 NODE_ENV 或命令行参数）
+      const isBuild = process.env.NODE_ENV === 'production' || process.argv.includes('--build');
+      if (!isBuild)
       {
-        console.log(`   - ${region.name} (来自: ${region.file})`);
-      });
+        console.log('🔍 找到以下代码区域:');
+        availableRegions.forEach(region =>
+        {
+          console.log(`   - ${region.name} (来自: ${region.file})`);
+        });
+      }
     }
 
   } catch (error)
