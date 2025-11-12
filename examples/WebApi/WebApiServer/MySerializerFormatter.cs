@@ -26,7 +26,7 @@ internal class MySerializerFormatter : ISerializerFormatter<string, HttpContext>
         throw new NotImplementedException();
     }
 
-    public bool TrySerialize(HttpContext state, in object target, out string source)
+    public bool TrySerialize<TObject>(HttpContext state, in TObject target, out string source)
     {
         //序列化
         throw new NotImplementedException();
