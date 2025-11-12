@@ -218,6 +218,7 @@ public static partial class SerializeConvert
     /// <param name="encoding">编码格式</param>
     /// <returns></returns>
     [RequiresUnreferencedCode("Members from serialized types may be trimmed if not referenced directly")]
+    [RequiresDynamicCode("XML serializer relies on dynamic code generation which is not available with Ahead of Time compilation")]
     public static string XmlSerializeToString(object obj, Encoding encoding)
     {
         return encoding.GetString(XmlSerializeToBytes(obj));
@@ -229,6 +230,7 @@ public static partial class SerializeConvert
     /// <param name="obj">数据对象</param>
     /// <returns></returns>
     [RequiresUnreferencedCode("Members from serialized types may be trimmed if not referenced directly")]
+    [RequiresDynamicCode("XML serializer relies on dynamic code generation which is not available with Ahead of Time compilation")]
     public static string XmlSerializeToString(object obj)
     {
         return XmlSerializeToString(obj, Encoding.UTF8);
@@ -240,6 +242,7 @@ public static partial class SerializeConvert
     /// <param name="obj">数据对象</param>
     /// <returns></returns>
     [RequiresUnreferencedCode("Members from serialized types may be trimmed if not referenced directly")]
+    [RequiresDynamicCode("XML serializer relies on dynamic code generation which is not available with Ahead of Time compilation")]
     public static byte[] XmlSerializeToBytes(object obj)
     {
         using (var fileStream = new MemoryStream())
@@ -256,6 +259,7 @@ public static partial class SerializeConvert
     /// <param name="obj"></param>
     /// <param name="path"></param>
     [RequiresUnreferencedCode("Members from serialized types may be trimmed if not referenced directly")]
+    [RequiresDynamicCode("XML serializer relies on dynamic code generation which is not available with Ahead of Time compilation")]
     public static void XmlSerializeToFile(object obj, string path)
     {
         using (var fileStream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite))
@@ -273,6 +277,7 @@ public static partial class SerializeConvert
     /// <param name="dataBytes">数据</param>
     /// <returns></returns>
     [RequiresUnreferencedCode("Members from serialized types may be trimmed if not referenced directly")]
+    [RequiresDynamicCode("XML serializer relies on dynamic code generation which is not available with Ahead of Time compilation")]
     public static T XmlDeserializeFromBytes<T>(byte[] dataBytes)
     {
         var xmlSerializer = new XmlSerializer(typeof(T));
@@ -289,6 +294,7 @@ public static partial class SerializeConvert
     /// <param name="type"></param>
     /// <returns></returns>
     [RequiresUnreferencedCode("Members from deserialized types may be trimmed if not referenced directly")]
+    [RequiresDynamicCode("XML serializer relies on dynamic code generation which is not available with Ahead of Time compilation")]
     public static object XmlDeserializeFromBytes(byte[] dataBytes, Type type)
     {
         var xmlSerializer = new XmlSerializer(type);
@@ -305,6 +311,7 @@ public static partial class SerializeConvert
     /// <param name="targetType"></param>
     /// <returns></returns>
     [RequiresUnreferencedCode("Members from deserialized types may be trimmed if not referenced directly")]
+    [RequiresDynamicCode("XML serializer relies on dynamic code generation which is not available with Ahead of Time compilation")]
     public static object XmlDeserializeFromStream(Stream xmlStream, Type targetType)
     {
         var xmlSerializer = new XmlSerializer(targetType);
@@ -318,6 +325,7 @@ public static partial class SerializeConvert
     /// <param name="xmlStream"></param>
     /// <returns></returns>
     [RequiresUnreferencedCode("Members from deserialized types may be trimmed if not referenced directly")]
+    [RequiresDynamicCode("XML serializer relies on dynamic code generation which is not available with Ahead of Time compilation")]
     public static T XmlDeserializeFromStream<T>(Stream xmlStream)
     {
         var xmlSerializer = new XmlSerializer(typeof(T));
@@ -331,6 +339,7 @@ public static partial class SerializeConvert
     /// <param name="targetType"></param>
     /// <returns></returns>
     [RequiresUnreferencedCode("Members from deserialized types may be trimmed if not referenced directly")]
+    [RequiresDynamicCode("XML serializer relies on dynamic code generation which is not available with Ahead of Time compilation")]
     public static object XmlDeserializeFromString(string xmlString, Type targetType)
     {
         return XmlDeserializeFromStream(new MemoryStream(Encoding.UTF8.GetBytes(xmlString)), targetType);
@@ -343,6 +352,7 @@ public static partial class SerializeConvert
     /// <param name="xmlString"></param>
     /// <returns></returns>
     [RequiresUnreferencedCode("Members from deserialized types may be trimmed if not referenced directly")]
+    [RequiresDynamicCode("XML serializer relies on dynamic code generation which is not available with Ahead of Time compilation")]
     public static T XmlDeserializeFromString<T>(string xmlString)
     {
         return (T)XmlDeserializeFromString(xmlString, typeof(T));
@@ -355,6 +365,7 @@ public static partial class SerializeConvert
     /// <param name="path">文件路径</param>
     /// <returns></returns>
     [RequiresUnreferencedCode("Members from deserialized types may be trimmed if not referenced directly")]
+    [RequiresDynamicCode("XML serializer relies on dynamic code generation which is not available with Ahead of Time compilation")]
     public static T XmlDeserializeFromFile<T>(string path)
     {
         using (Stream xmlStream = new FileStream(path, FileMode.Open, FileAccess.Read))

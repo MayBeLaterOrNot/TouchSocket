@@ -10,31 +10,24 @@
 // 感谢您的下载和使用
 // ------------------------------------------------------------------------------
 
-using System.IO.Pipelines;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 
-namespace TouchSocket.Sockets;
+namespace TouchSocket.Core;
 
-/// <summary>
-/// 管道式Tcp客户端。
-/// </summary>
-public class PipeTcpClient : TcpClientBase, IPipeTcpClient
+public abstract class SystemTextJsonSerializerFormatter<TSource, TState> : ISerializerFormatter<TSource, TState>
 {
     /// <inheritdoc/>
-    public PipeReader Input => base.Transport.Reader;
+    public int Order { get; set; }
+    /// <summary>
+    /// 获取或设置Json序列化选项。
+    /// </summary>
+    public JsonSerializerOptions JsonSettings { get; set; } = new JsonSerializerOptions();
 
     /// <inheritdoc/>
-    public PipeWriter Output => base.Transport.Writer;
+    public abstract bool TryDeserialize(TState state, in TSource source, [DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] Type targetType, out object target);
 
     /// <inheritdoc/>
-    public Task ConnectAsync(CancellationToken cancellationToken)
-    {
-        return this.TcpConnectAsync(cancellationToken);
-    }
+    public abstract bool TrySerialize<TTarget>(TState state, in TTarget target, out TSource source);
 
-    /// <inheritdoc/>
-    protected sealed override async Task ReceiveLoopAsync(ITransport transport)
-    {
-        var cancellationToken = transport.ClosedToken;
-        await Task.Delay(-1, cancellationToken).ConfigureAwait(EasyTask.ContinueOnCapturedContext);
-    }
 }

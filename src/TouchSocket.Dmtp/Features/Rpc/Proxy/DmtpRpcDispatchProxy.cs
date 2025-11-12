@@ -10,6 +10,7 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using TouchSocket.Rpc;
 
 namespace TouchSocket.Dmtp.Rpc;
@@ -18,6 +19,7 @@ namespace TouchSocket.Dmtp.Rpc;
 /// DmtpRpcDispatchProxy
 /// </summary>
 /// <typeparam name="TClient"></typeparam>
+[RequiresUnreferencedCode("动态代理不支持AOT环境")]
 public abstract class DmtpRpcDispatchProxy<TClient> : RpcDispatchProxy<TClient, DmtpRpcAttribute> where TClient : IDmtpRpcActor
 {
 
@@ -26,6 +28,7 @@ public abstract class DmtpRpcDispatchProxy<TClient> : RpcDispatchProxy<TClient, 
 /// <summary>
 /// DmtpRpcDispatchProxy
 /// </summary>
+[RequiresUnreferencedCode("动态代理不支持AOT环境")]
 public abstract class DmtpRpcDispatchProxy : DmtpRpcDispatchProxy<IDmtpRpcActor>
 {
 

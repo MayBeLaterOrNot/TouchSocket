@@ -36,7 +36,7 @@ public struct ValueCounter
     /// </summary>
     /// <param name="period">计数周期时间间隔。</param>
     /// <param name="onPeriod">当达到一个周期时的回调函数，参数为周期内的累计计数值。</param>
-    public ValueCounter(TimeSpan period, Action<long> onPeriod) : this()
+    public ValueCounter(TimeSpan period, Action<long> onPeriod = default) : this()
     {
         this.OnPeriod = onPeriod;
         this.Period = period;

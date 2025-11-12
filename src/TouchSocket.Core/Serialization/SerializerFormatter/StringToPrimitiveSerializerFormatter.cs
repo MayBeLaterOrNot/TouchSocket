@@ -17,7 +17,7 @@ namespace TouchSocket.Core;
 /// <summary>
 /// String值转换为基础类型。
 /// </summary>
-public class StringToPrimitiveSerializerFormatter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState> : ISerializerFormatter<string, TState>
+public class StringToPrimitiveSerializerFormatter<TState> : ISerializerFormatter<string, TState>
 {
     /// <inheritdoc/>
     public int Order { get; set; }
@@ -34,7 +34,7 @@ public class StringToPrimitiveSerializerFormatter<[DynamicallyAccessedMembers(AO
     }
 
     /// <inheritdoc/>
-    public virtual bool TrySerialize(TState state, in object target, out string source)
+    public virtual bool TrySerialize<TTarget>(TState state, in TTarget target, out string source)
     {
         if (target != null)
         {

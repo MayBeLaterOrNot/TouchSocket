@@ -29,8 +29,7 @@ internal abstract class BaseTransport : SafetyDisposableObject, ITransport
     private readonly SemaphoreSlim m_readLocker = new SemaphoreSlim(1, 1);
     protected readonly CancellationTokenSource m_tokenSource = new CancellationTokenSource();
     private readonly SemaphoreSlim m_writeLocker = new SemaphoreSlim(1, 1);
-    private int m_cachedReceiveBufferSize = 1024 * 10;
-    private int m_cachedSendBufferSize = 1024 * 10;
+    private int m_cachedReceiveBufferSize = 1024 * 2;
 
     public BaseTransport(TransportOption option)
     {
@@ -43,13 +42,15 @@ internal abstract class BaseTransport : SafetyDisposableObject, ITransport
         this.m_pipeSend = sendPipeOptions == null ? new Pipe() : new Pipe(sendPipeOptions);
         this.m_receiveCounter = new ValueCounter(TimeSpan.FromSeconds(1), this.OnReceivePeriod);
 
-        this.m_sentCounter = new ValueCounter(TimeSpan.FromSeconds(1), this.OnSendPeriod);
+        this.m_sentCounter = new ValueCounter(TimeSpan.FromSeconds(1));
         this.m_maxBufferSize = maxBufferSize;
         this.m_minBufferSize = minBufferSize;
 
         // 初始化缓存的缓冲区大小
-        this.m_cachedReceiveBufferSize = this.ClampBufferSize(1024 * 10);
-        this.m_cachedSendBufferSize = this.ClampBufferSize(1024 * 10);
+        // 参考ASP.NET Core的做法，默认使用2KB作为起始值
+        // 这是一个在内存占用和性能之间很好的平衡点
+        this.m_cachedReceiveBufferSize = this.ClampBufferSize(1024 * 2);
+
     }
 
     public ClosedEventArgs ClosedEventArgs => this.m_closedEventArgs ?? s_defaultClosedEventArgs;
@@ -73,10 +74,6 @@ internal abstract class BaseTransport : SafetyDisposableObject, ITransport
     /// </summary>
     public ValueCounter ReceiveCounter => this.m_receiveCounter;
 
-    /// <summary>
-    /// 发送缓存池，运行时的值会根据流速自动调整
-    /// </summary>
-    public int SendBufferSize => this.m_cachedSendBufferSize;
 
     /// <summary>
     /// 发送计数器
@@ -154,11 +151,6 @@ internal abstract class BaseTransport : SafetyDisposableObject, ITransport
         this.m_cachedReceiveBufferSize = this.ClampBufferSize(newSize);
     }
 
-    private void OnSendPeriod(long value)
-    {
-        var newSize = CalculateOptimalBufferSize(value);
-        this.m_cachedSendBufferSize = this.ClampBufferSize(newSize);
-    }
 
     /// <summary>
     /// 根据数据流量计算最优缓冲区大小
@@ -168,21 +160,31 @@ internal abstract class BaseTransport : SafetyDisposableObject, ITransport
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int CalculateOptimalBufferSize(long bytesPerSecond)
     {
-        // 定义缓冲区大小常量，提高可读性和可维护性
+        // 定义缓冲区大小常量
         const int KB = 1024;
-        const int MB = KB * 1024;
-        const int GB = MB * 1024;
 
         return bytesPerSecond switch
         {
-            < 100 * KB => KB,          // <100KB/s: 1KB缓冲区
-            < 512 * KB => 10 * KB,            // <512KB/s: 10KB缓冲区
-            < MB => 64 * KB,               // <1MB/s: 64KB缓冲区
-            < 50 * MB => 512 * KB,      // <50MB/s: 512KB缓冲区
-            < 100 * MB => MB,               // <100MB/s: 1MB缓冲区
-            < GB => 2 * MB,  // <1GB/s: 2MB缓冲区
-            < 10L * GB => 5 * MB,         // <10GB/s: 5MB缓冲区
-            _ => 10 * MB   // >=10GB/s: 10MB缓冲区
+            // <10KB/s: 2KB缓冲区，适用于低流量场景(如聊天、控制命令等)
+            < 10 * KB => 2 * KB,
+
+            // 10KB/s - 100KB/s: 4KB缓冲区，适用于一般Web请求
+            < 100 * KB => 4 * KB,
+
+            // 100KB/s - 1MB/s: 8KB缓冲区，适用于小文件传输
+            < KB * KB => 8 * KB,
+
+            // 1MB/s - 10MB/s: 16KB缓冲区，适用于中等流量
+            < 10 * KB * KB => 16 * KB,
+
+            // 10MB/s - 50MB/s: 32KB缓冲区，适用于大文件传输
+            < 50 * KB * KB => 32 * KB,
+
+            // 50MB/s - 100MB/s: 64KB缓冲区，适用于高速传输
+            < 100 * KB * KB => 64 * KB,
+
+            // >=100MB/s: 128KB缓冲区，适用于超高速传输
+            _ => 128 * KB
         };
     }
 }

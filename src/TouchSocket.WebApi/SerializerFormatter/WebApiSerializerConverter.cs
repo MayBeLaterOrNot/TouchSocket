@@ -11,6 +11,7 @@
 //------------------------------------------------------------------------------
 
 using Newtonsoft.Json;
+using System.Diagnostics.CodeAnalysis;
 using TouchSocket.Http;
 
 namespace TouchSocket.WebApi;
@@ -50,6 +51,7 @@ public class WebApiSerializerConverter : TouchSocketSerializerConverter<string, 
     /// <summary>
     /// 添加Xml序列化器
     /// </summary>
+    [RequiresUnreferencedCode("Members from deserialized types may be trimmed if not referenced directly")]
     public void AddXmlSerializerFormatter()
     {
         this.Add(new WebApiXmlSerializerFormatter());

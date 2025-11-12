@@ -19,7 +19,7 @@ namespace TouchSocket.Core;
 /// </summary>
 /// <typeparam name="TState"></typeparam>
 [RequiresUnreferencedCode("Members from deserialized types may be trimmed if not referenced directly")]
-public class XmlStringToClassSerializerFormatter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState> : ISerializerFormatter<string, TState>
+public class XmlStringToClassSerializerFormatter<TState> : ISerializerFormatter<string, TState>
 {
     /// <inheritdoc/>
     public int Order { get; set; }
@@ -40,7 +40,7 @@ public class XmlStringToClassSerializerFormatter<[DynamicallyAccessedMembers(AOT
     }
 
     /// <inheritdoc/>
-    public virtual bool TrySerialize(TState state, in object target, out string source)
+    public virtual bool TrySerialize<TTarget>(TState state, in TTarget target, out string source)
     {
         try
         {

@@ -14,6 +14,9 @@ using System.IO.Pipelines;
 
 namespace TouchSocket.Sockets;
 
+/// <summary>
+/// 管道式Tcp客户端。
+/// </summary>
 public interface IPipeTcpClient : ISetupConfigObject, ITcpSession, IDuplexPipe, ITcpConnectableClient
 {
 }

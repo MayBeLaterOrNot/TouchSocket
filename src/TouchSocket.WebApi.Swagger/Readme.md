@@ -18,7 +18,7 @@ TouchSocket.WebApi.Swagger 是适用于 TouchSocket.WebApi 的 Swagger 页面组
 - netstandard2.0
 - netstandard2.1
 - net6.0
-- net9.0
+- net10.0
 - net8.0
 
 ## 贡献与反馈

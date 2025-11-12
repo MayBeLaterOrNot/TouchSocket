@@ -18,7 +18,7 @@ namespace TouchSocket.Core;
 /// <summary>
 /// Json字节转到对应类
 /// </summary>
-public class JsonBytesToClassSerializerFormatter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState> : ISerializerFormatter<ReadOnlyMemory<byte>, TState>
+public class JsonBytesToClassSerializerFormatter<TState> : ISerializerFormatter<ReadOnlyMemory<byte>, TState>
 {
     /// <summary>
     /// JsonSettings
@@ -45,11 +45,7 @@ public class JsonBytesToClassSerializerFormatter<[DynamicallyAccessedMembers(AOT
     }
 
     /// <inheritdoc/>
-    /// <param name="state"></param>
-    /// <param name="target"></param>
-    /// <param name="source"></param>
-    /// <returns></returns>
-    public virtual bool TrySerialize(TState state, in object target, out ReadOnlyMemory<byte> source)
+    public virtual bool TrySerialize<TTarget>(TState state, in TTarget target, out ReadOnlyMemory<byte> source)
     {
         try
         {

@@ -20,7 +20,7 @@ namespace TouchSocket.Core;
 /// 该类实现了 ISerializerFormatter 接口，特化于 ReadOnlyMemory{byte} 类型的输入和 TState 类型的输出。
 /// </summary>
 /// <typeparam name="TState">要反序列化的状态类类型。</typeparam>
-public class JsonMemoryToClassSerializerFormatter<[DynamicallyAccessedMembers(AOT.SerializerFormatterMemberType)] TState> : ISerializerFormatter<ReadOnlyMemory<byte>, TState>
+public class JsonMemoryToClassSerializerFormatter<TState> : ISerializerFormatter<ReadOnlyMemory<byte>, TState>
 {
     /// <summary>
     /// JsonSettings
@@ -46,7 +46,7 @@ public class JsonMemoryToClassSerializerFormatter<[DynamicallyAccessedMembers(AO
     }
 
     /// <inheritdoc/>
-    public bool TrySerialize(TState state, in object target, out ReadOnlyMemory<byte> source)
+    public bool TrySerialize<TTarget>(TState state, in TTarget target, out ReadOnlyMemory<byte> source)
     {
         try
         {

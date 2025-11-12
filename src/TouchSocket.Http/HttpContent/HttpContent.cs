@@ -48,7 +48,6 @@ public abstract class HttpContent
         return this.TryComputeLength(out length);
     }
 
-
     internal Task InternalWriteContent(PipeWriter writer, CancellationToken cancellationToken)
     {
         return this.WriteContent(writer, cancellationToken);
@@ -74,7 +73,6 @@ public abstract class HttpContent
     /// <param name="length">输出参数，表示内容的长度。</param>
     /// <returns>如果成功计算长度，则返回 true；否则返回 false。</returns>
     protected abstract bool TryComputeLength(out long length);
-
 
     protected abstract Task WriteContent(PipeWriter writer, CancellationToken cancellationToken);
 

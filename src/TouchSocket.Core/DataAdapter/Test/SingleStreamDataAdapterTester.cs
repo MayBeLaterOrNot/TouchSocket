@@ -16,7 +16,7 @@ using System.IO.Pipelines;
 namespace TouchSocket.Core;
 
 /// <summary>
-///单线程状况的流式数据处理适配器测试
+/// 单线程状况的流式数据处理适配器测试。
 /// </summary>
 public class SingleStreamDataAdapterTester : DisposableObject
 {
@@ -28,17 +28,18 @@ public class SingleStreamDataAdapterTester : DisposableObject
     private Func<ReadOnlyMemory<byte>, IRequestInfo, Task> m_receivedCallBack;
 
     /// <summary>
-    /// Tcp数据处理适配器测试
+    /// Tcp数据处理适配器测试。
     /// </summary>
     protected SingleStreamDataAdapterTester()
     {
     }
 
     /// <summary>
-    /// 获取测试器
+    /// 获取测试器。
     /// </summary>
-    /// <param name="adapter">待测试适配器</param>
-    /// <param name="receivedCallBack">收到数据回调</param>
+    /// <param name="adapter">待测试适配器。</param>
+    /// <param name="receivedCallBack">收到数据回调。</param>
+    /// <returns>返回<see cref="SingleStreamDataAdapterTester"/>实例。</returns>
     public static SingleStreamDataAdapterTester CreateTester(SingleStreamDataHandlingAdapter adapter, Func<ReadOnlyMemory<byte>, IRequestInfo, Task> receivedCallBack = default)
     {
         var tester = new SingleStreamDataAdapterTester
@@ -50,7 +51,15 @@ public class SingleStreamDataAdapterTester : DisposableObject
         return tester;
     }
 
-
+    /// <summary>
+    /// 异步运行数据适配器测试。
+    /// </summary>
+    /// <param name="memory">要发送的数据内存块。</param>
+    /// <param name="testCount">测试发送次数。</param>
+    /// <param name="expectedCount">预期接收次数。</param>
+    /// <param name="bufferLength">每次写入的缓冲区长度。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>返回测试所用的时间。</returns>
     public async Task<TimeSpan> RunAsync(ReadOnlyMemory<byte> memory, int testCount, int expectedCount, int bufferLength, CancellationToken cancellationToken)
     {
         this.m_count = 0;

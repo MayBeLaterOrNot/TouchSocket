@@ -15,52 +15,41 @@ using System.Runtime.CompilerServices;
 
 namespace TouchSocket.Core;
 
-
+/// <summary>
+/// 表示一个使用内存池的字节读取器。
+/// <inheritdoc />
+/// </summary>
 public sealed class PooledBytesReader : IDisposable, IBytesReader
 {
-    private ReadOnlySequence<byte> m_sequence;
     private IMemoryOwner<byte> m_memoryOwner;
-
     private long m_position = 0;
+    private ReadOnlySequence<byte> m_sequence;
 
-    public void Reset(ReadOnlySequence<byte> sequence)
-    {
-        this.m_position = 0;
-        this.m_sequence = sequence;
-    }
-
-    public void Reset(ReadOnlyMemory<byte> memory)
-    {
-        this.m_position = 0;
-        this.m_sequence = new ReadOnlySequence<byte>(memory);
-    }
-
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public long BytesRead { get => this.m_position; set => this.m_position = value; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public long BytesRemaining => this.m_sequence.Length - this.m_position;
 
-    /// <inheritdoc/>
-    public ReadOnlySequence<byte> TotalSequence => this.m_sequence;
-
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public ReadOnlySequence<byte> Sequence => this.TotalSequence.Slice(this.BytesRead);
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
+    public ReadOnlySequence<byte> TotalSequence => this.m_sequence;
+
+    /// <inheritdoc />
     public void Advance(int count)
     {
         this.m_position += count;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Clear()
+    /// <inheritdoc />
+    public void Dispose()
     {
-        this.m_memoryOwner?.Dispose();
-        this.m_memoryOwner = default;
+        this.Clear();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public ReadOnlyMemory<byte> GetMemory(int count)
     {
         var sequence = this.m_sequence.Slice(this.m_position, count);
@@ -75,13 +64,13 @@ public sealed class PooledBytesReader : IDisposable, IBytesReader
         return cacheMemory;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public ReadOnlySpan<byte> GetSpan(int count)
     {
         return this.GetMemory(count).Span;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public int Read(Span<byte> span)
     {
         if (span.IsEmpty)
@@ -93,6 +82,35 @@ public sealed class PooledBytesReader : IDisposable, IBytesReader
         tempSpan.CopyTo(span);
         this.Advance(canReadLength);
         return canReadLength;
+    }
+
+    /// <summary>
+    /// 重置读取器，使用新的字节序列。
+    /// </summary>
+    /// <param name="sequence">新的字节序列。</param>
+    public void Reset(ReadOnlySequence<byte> sequence)
+    {
+        this.m_position = 0;
+        this.m_sequence = sequence;
+    }
+
+    /// <summary>
+    /// 重置读取器，使用新的只读内存。
+    /// </summary>
+    /// <param name="memory">新的只读内存。</param>
+    public void Reset(ReadOnlyMemory<byte> memory)
+    {
+        this.m_position = 0;
+        this.m_sequence = new ReadOnlySequence<byte>(memory);
+    }
+
+    /// <summary>
+    /// 清理内存所有者。
+    /// </summary>
+    public void Clear()
+    {
+        this.m_memoryOwner?.Dispose();
+        this.m_memoryOwner = default;
     }
 
     private Memory<byte> GetCacheMemory(int size)
@@ -107,11 +125,5 @@ public sealed class PooledBytesReader : IDisposable, IBytesReader
             this.m_memoryOwner = MemoryPool<byte>.Shared.Rent(size);
         }
         return this.m_memoryOwner.Memory.Slice(0, size); // 返回精确大小的切片
-    }
-
-    /// <inheritdoc/>
-    public void Dispose()
-    {
-        this.Clear();
     }
 }

@@ -10,6 +10,7 @@
 //  感谢您的下载和使用
 //------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace TouchSocket.Sockets;
@@ -18,6 +19,7 @@ namespace TouchSocket.Sockets;
 /// Tcp命令行插件。
 /// </summary>
 [DynamicMethod]
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
 public abstract class TcpCommandLinePlugin : PluginBase, ITcpReceivedPlugin
 {
     private readonly ILog m_logger;
@@ -64,9 +66,7 @@ public abstract class TcpCommandLinePlugin : PluginBase, ITcpReceivedPlugin
     /// <returns>返回当前的TcpCommandLinePlugin实例，以支持链式调用。</returns>
     public TcpCommandLinePlugin NoReturnException()
     {
-        // 设置是否在执行异常时返回异常的标志为<see langword="false"/>
         this.ReturnException = false;
-        // 返回当前实例，以支持链式调用
         return this;
     }
 

@@ -117,16 +117,6 @@ public interface IDmtpActor : IDisposableObject, IOnlineClient, IClosableClient,
     /// <param name="actor">要添加的 Actor 实例。</param>
     void AddActor<TActor>(TActor actor) where TActor : class, IActor;
 
-
-
-    /// <summary>
-    /// 尝试添加一个实现了 <see cref="IActor"/> 接口的 Actor 实例。
-    /// </summary>
-    /// <typeparam name="TActor">Actor 的具体类型，必须实现 <see cref="IActor"/> 接口。</typeparam>
-    /// <param name="actor">要添加的 Actor 实例。</param>
-    /// <returns>如果添加成功则返回 <see langword="true"/>，否则返回 <see langword="false"/>。</returns>
-    bool TryAddActor<TActor>(TActor actor) where TActor : class, IActor;
-
     /// <summary>
     /// 获取指定类型的 Actor 实例。
     /// </summary>
@@ -160,6 +150,18 @@ public interface IDmtpActor : IDisposableObject, IOnlineClient, IClosableClient,
     /// </remarks>
     Task SendAsync(ushort protocol, ReadOnlyMemory<byte> memory, CancellationToken cancellationToken = default);
 
+    Task SendAsync<TPackage>(ushort protocol, TPackage package, CancellationToken cancellationToken = default) where TPackage : IPackage;
+
+    Task SendAsync(ushort protocol, string value, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 尝试添加一个实现了 <see cref="IActor"/> 接口的 Actor 实例。
+    /// </summary>
+    /// <typeparam name="TActor">Actor 的具体类型，必须实现 <see cref="IActor"/> 接口。</typeparam>
+    /// <param name="actor">要添加的 Actor 实例。</param>
+    /// <returns>如果添加成功则返回 <see langword="true"/>，否则返回 <see langword="false"/>。</returns>
+    bool TryAddActor<TActor>(TActor actor) where TActor : class, IActor;
+
     /// <summary>
     /// 尝试获取指定Id的DmtpActor。一般此方法仅在Service下有效。
     /// </summary>
@@ -173,8 +175,6 @@ public interface IDmtpActor : IDisposableObject, IOnlineClient, IClosableClient,
     /// <param name="e">包含路由信息的事件参数</param>
     /// <returns>一个Task布尔值，指示路由尝试是否成功</returns>
     Task<bool> TryRouteAsync(PackageRouterEventArgs e);
-    Task SendAsync<TPackage>(ushort protocol, TPackage package, CancellationToken cancellationToken = default) where TPackage : IPackage;
-    Task SendAsync(ushort protocol, string value, CancellationToken cancellationToken = default);
 
     #endregion 方法
 }

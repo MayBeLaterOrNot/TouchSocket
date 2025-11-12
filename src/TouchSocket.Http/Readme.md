@@ -26,7 +26,7 @@ TouchSocket.Http 是一个基于 Http1.1 协议的组件库，为开发者提供
 - netstandard2.0
 - netstandard2.1
 - net6.0
-- net9.0
+- net10.0
 - net8.0
 
 ## 使用方法
